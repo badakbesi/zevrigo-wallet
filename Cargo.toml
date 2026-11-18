@@ -1,0 +1,59 @@
+# Zevrigo Wallet (MOD-15): repo sendiri dalam zevrigo_lab (pemisahan 17 November 2026, AGENDA P1). Crate Rust aplikasi ada
+# di `src-tauri`, antarmuka React di akar repo (npm). Aturan lint, toolchain, dan larangan sama dengan repo inti `zevrigo`.
+[workspace]
+resolver = "3"
+members = ["src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99.0"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# zevrigo_lab (17 November 2026, AGENDA P3): crate inti dari repo `zevrigo` di folder sebelah (`../zevrigo`). Sementara
+# lewat path; diganti dependensi git ke repo inti dengan tag sesudah keputusan git pencipta.
+zevrigo-primitives = { path = "../zevrigo/crates/primitives" }
+zevrigo-rpc = { path = "../zevrigo/crates/rpc" }
+zevrigo-wallet-core = { path = "../zevrigo/crates/wallet-core" }
+zevrigo-cli = { path = "../zevrigo/apps/cli" }
+# DEC-10 bagian 14 (TSK-M60): fitur `tls` jsonrpsee-http-client di MOD-08 menambah 11 paket (hyper-rustls, tokio-rustls,
+# rustls-platform-verifier + -android, rustls-native-certs, openssl-probe, schannel, security-framework + -sys,
+# webpki-root-certs 0.26 dan 1.0); docs/reference/paket-mod08-tls-v0.1.txt.
+serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0.154", default-features = false, features = ["std"] }
+zeroize = { version = "1.9.1", default-features = false }
+# DEC-10 bagian 11 (DEC-31): hanya MOD-15 wallet desktop. Fitur bawaan Tauri dipakai (WebView lewat wry, IPC, ikon
+# jendela); di Linux butuh WebKitGTK 4.1 (libwebkit2gtk-4.1-dev, librsvg2-dev, libxdo-dev, libayatana-appindicator3-dev).
+# Versi dikunci persis (=) sesuai yang disetujui; tanpa itu Cargo memilih rilis patch terbaru.
+tauri = { version = "=2.12.3" }
+# TSK-M58: dipakai langsung oleh MOD-15 di Android (inisialisasi JNI); versi sama dengan yang dibawa MOD-08 (DEC-10 bagian 14).
+rustls-platform-verifier = { version = "=0.5.3", default-features = false }
+tauri-build = { version = "=2.7.2" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "warn"
+dbg_macro = "deny"
+float_arithmetic = "deny"
+float_cmp = "deny"
+float_cmp_const = "deny"
+lossy_float_literal = "deny"
+cast_precision_loss = "deny"
+imprecise_flops = "deny"
+suboptimal_flops = "deny"
+
+# DEC-27: Argon2id dan BLAKE2 di dalamnya dioptimalkan juga di profil dev dan test, agar uji wallet dengan parameter
+# Argon2id penuh (64 MiB) tidak lambat. Tidak mengubah Cargo.lock maupun build rilis.
+[profile.dev.package.argon2]
+opt-level = 3
+
+[profile.dev.package.blake2]
+opt-level = 3

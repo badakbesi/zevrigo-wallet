@@ -1,0 +1,14 @@
+# Hasil build Rust (Cargo.lock sengaja TIDAK diabaikan untuk reproducible build)
+/target/
+
+# Paket npm, hasil build antarmuka, dan berkas buatan tauri (package-lock.json tetap di-commit)
+node_modules/
+dist/
+*.tsbuildinfo
+src-tauri/gen/
+
+# Konfigurasi editor lokal
+.vscode/
+.idea/
+*.swp
+*~

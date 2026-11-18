@@ -1,0 +1,61 @@
+# CI wallet (zevrigo_lab). Sementara crate inti lewat path `../zevrigo` (AGENDA P3): repo inti di-checkout di sebelah repo ini
+# pada ref ZEVRIGO_CORE_REF. Diganti dependensi git dengan tag sesudah keputusan git pencipta.
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-24.04
+    env:
+      ZEVRIGO_CORE_REF: main
+    defaults:
+      run:
+        working-directory: zevrigo-wallet
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: zevrigo-wallet
+          persist-credentials: false
+
+      - name: Checkout repo inti (crate zevrigo-*)
+        uses: actions/checkout@v4
+        with:
+          repository: badakbesi/zevrigo
+          ref: ${{ env.ZEVRIGO_CORE_REF }}
+          path: zevrigo
+          persist-credentials: false
+
+      - name: Toolchain Rust (rust-toolchain.toml)
+        run: |
+          rustup toolchain install
+          rustc --version
+          cargo clippy --version
+          cargo fmt --version
+
+      - name: Pustaka sistem
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends make g++ pkg-config libwebkit2gtk-4.1-dev librsvg2-dev libxdo-dev libayatana-appindicator3-dev
+
+      - name: Build dengan Cargo.lock tetap
+        run: cargo build --workspace --locked
+
+      - name: make check-all
+        run: make check-all
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Antarmuka wallet
+        run: make wallet-check
