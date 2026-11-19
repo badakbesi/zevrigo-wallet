@@ -73,5 +73,21 @@ B="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
 CC_aarch64_linux_android="$B/aarch64-linux-android24-clang" AR_aarch64_linux_android="$B/llvm-ar" \
 CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$B/aarch64-linux-android24-clang" \
   cargo clippy --target aarch64-linux-android -p zevrigo-wallet --lib -- -D warnings
+# HP 32-bit (sekali: rustup target add armv7-linux-androideabi)
+CC_armv7_linux_androideabi="$B/armv7a-linux-androideabi24-clang" AR_armv7_linux_androideabi="$B/llvm-ar" \
+CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="$B/armv7a-linux-androideabi24-clang" \
+  cargo clippy --target armv7-linux-androideabi -p zevrigo-wallet --lib -- -D warnings
 ```
+
+Proyek Gradle Android (`src-tauri/gen/android`) tidak di-commit: berisi jalur mutlak alat build di PC pencipta (repository
+Maven lokal komponen Kotlin rustls-platform-verifier, wrapper Gradle lokal) dan aturan R8 `app/zevrigo-rustls.pro`. Salinannya
+di luar repo: `C:\zevrigo_lab\arsip\zevrigo-wallet-android-gen.tar.gz`. APK rilis (satu APK untuk HP 64-bit `arm64-v8a`
+dan 32-bit `armeabi-v7a`, Android 7.0 ke atas) dibangun tanpa tanda tangan
+(`npx tauri android build --apk --target aarch64 armv7`), lalu ditandatangani pencipta dengan kunci rilis di luar repo (sidik
+sertifikat di [SUMBER_RESMI.md](https://github.com/badakbesi/zevrigo/blob/main/SUMBER_RESMI.md)).
+
+## Ikon
+
+Ikon aplikasi (`src-tauri/icons`, ikon peluncur Android `mipmap-*`) diturunkan dari logo resmi
+`merek/zevrigo-ikon-aplikasi-1024.png` dan `merek/zevrigo-tanda-1024.png` repo inti (DEC-40), tanpa mengubah warna dan bentuk.
 

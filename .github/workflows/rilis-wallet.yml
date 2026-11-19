@@ -6,7 +6,8 @@
 # SignPath Foundation disetujui (docs/code-signing-policy.md).
 #
 # zevrigo_lab (AGENDA P3): sementara crate inti lewat path `../zevrigo`, jadi repo inti di-checkout di sebelah repo ini
-# (folder `zevrigo`) pada ref ZEVRIGO_CORE_REF. Diganti dependensi git dengan tag sesudah keputusan git pencipta.
+# (folder `zevrigo`). ZEVRIGO_CORE_REF dikunci ke commit repo inti (keputusan pencipta 19 November 2026, RENCANA_T4), agar
+# rilis yang sama selalu dibangun dari kode yang sama; commit itu dicatat di catatan rilis. Diganti saat repo inti berubah.
 
 name: Rilis wallet
 
@@ -31,7 +32,7 @@ jobs:
       contents: write
     env:
       CI: "true"
-      ZEVRIGO_CORE_REF: main
+      ZEVRIGO_CORE_REF: 8eb670daf3c4e56cfb7f9ca5f782268d2da14fef
     defaults:
       run:
         working-directory: zevrigo-wallet
@@ -118,6 +119,7 @@ jobs:
           $catatan = $catatan.Replace('{{VERSI}}', '${{ steps.versi.outputs.versi }}')
           $catatan = $catatan.Replace('{{TAG}}', $env:GITHUB_REF_NAME)
           $catatan = $catatan.Replace('{{COMMIT}}', $env:GITHUB_SHA.Substring(0, 7))
+          $catatan = $catatan.Replace('{{INTI}}', $env:ZEVRIGO_CORE_REF.Substring(0, 7))
           $catatan = $catatan.Replace('{{BERKAS}}', '${{ steps.berkas.outputs.nama }}')
           $catatan = $catatan.Replace('{{SHA256}}', '${{ steps.berkas.outputs.sha }}')
           $catatan | Out-File -Encoding utf8 rilis/catatan.md

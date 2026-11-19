@@ -1,5 +1,5 @@
 Wallet desktop Zevrigo {{VERSI}} untuk Windows (x64), dibangun GitHub Actions dari tag `{{TAG}}` (commit `{{COMMIT}}`)
-dengan Cargo.lock dan package-lock.json tetap.
+dengan Cargo.lock dan package-lock.json tetap, dan crate inti dari repo `badakbesi/zevrigo` commit `{{INTI}}`.
 
 **Jaringan demo regtest untuk belajar.** Koin demo tidak bernilai, tidak bisa dijual, dan bisa hilang saat jaringan
 di-reset. Ini bukan penawaran investasi.

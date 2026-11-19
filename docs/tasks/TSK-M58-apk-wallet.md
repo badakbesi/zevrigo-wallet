@@ -11,7 +11,7 @@
 | Folder data | Desktop tidak berubah (`AppState::from_env`). Android: `app.path().app_data_dir()` lewat `AppState::new`, dibuat jika belum ada |
 | HTTPS Android | Pilihan pencipta: daftar akar sistem Android. `rustls_platform_verifier::android::init_with_env(env, context)` dipanggil sekali di `setup`, dengan konteks Activity dari `WebviewWindow::with_webview` dan `PlatformWebview::jni_handle().exec` (API aman Tauri/wry; repo tetap tanpa `unsafe`). Ketergantungan langsung `rustls-platform-verifier = "=0.5.3"` hanya untuk `target_os = "android"`, paket yang sama dengan yang dibawa MOD-08 (DEC-10 bagian 14); Cargo.lock hanya bertambah satu rujukan |
 | Tampilan HP | Layar di bawah `md` (768 px): menu atas disembunyikan, menu bawah lima tombol (tinggi 56 px, aman untuk area gestur), jarak tepi 16 px, alamat node dipatahkan. `viewport-fit=cover` |
-| Gerbang | `make check-all` (desktop tidak berubah), `make wallet-check`, dan `cargo clippy --target aarch64-linux-android -p zevrigo-wallet --lib -- -D warnings` dengan clang NDK |
+| Gerbang | `make check-all` (desktop tidak berubah), `make wallet-check`, dan `cargo clippy --target aarch64-linux-android -p zevrigo-wallet --lib -- -D warnings` (juga `armv7-linux-androideabi` sejak 0.2.1) dengan clang NDK |
 
 ## Bagian 2: APK uji (Q137)
 `npm run tauri android init` (proyek Gradle di `src-tauri/gen/android`), repository Maven lokal komponen Kotlin
@@ -40,3 +40,11 @@ dari 24 kata). Perbaikan: koreksi dan kapitalisasi otomatis dimatikan di kotak f
 pesan `bad_phrase` lebih jelas, dan perintah `delete_wallet` + kartu "Hapus wallet dari perangkat ini" di Pengaturan
 (password + centang catatan frasa). Versi wallet 0.2.1 (desktop dan Android, versionCode 2001), sehingga APK 0.2.1 bisa
 dipasang di atas 0.2.0 dengan kunci yang sama. Halaman `/unduh/` menunggu rilis `wallet-v0.2.1` (sha256 `null`).
+
+## Bagian 5: rilis 0.2.1 dari repo bersih (Q155, RENCANA_T4)
+Sesudah pemisahan repo (DEC-39) dan mulai bersih (DEC-08), proyek Gradle Q137/Q143 dipulihkan dari cadangan Q151 ke
+`src-tauri/gen/android` (56 berkas sumber, tetap tidak di-commit; salinan di `C:\zevrigo_lab\arsip`). Ikon Windows dan ikon
+peluncur Android diganti logo resmi (DEC-40). Rilis Windows dibangun dari repo inti commit `8eb670d` (dikunci di
+`rilis-wallet.yml`). APK 0.2.1 dibangun tanpa tanda tangan lalu ditandatangani pencipta (`q155_tanda.sh`); rilis APK terpisah
+dari rilis Windows (keputusan pencipta 19 November 2026). Sejak 0.2.1 satu APK memuat pustaka untuk HP 64-bit (`arm64-v8a`) dan
+32-bit (`armeabi-v7a`), karena APK 0.2.0 yang hanya arm64 tidak bisa dipasang di HP 32-bit (pencipta 19 November 2026).

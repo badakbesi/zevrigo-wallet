@@ -26,6 +26,7 @@ dan mengirim ZVRG, dengan kunci hanya di komputer pengguna.
   untuk dicocokkan dengan catatan. Galat `bad_phrase` menjelaskan bahwa semua kata dikenal tetapi checksum tidak cocok.
 - Hapus wallet dari perangkat (0.2.1, `delete_wallet`): password wajib (file wallet dibuka dulu), centang "sudah mencatat
   frasa"; tembolok `history.json` lalu `wallet.json` jaringan aktif dihapus, lalu layar wallet baru / pulihkan tampil.
+- Ikon aplikasi (0.2.1, DEC-40): `src-tauri/icons` dan ikon peluncur Android dari logo resmi `merek/` repo inti.
 - Galat dikirim dengan kode tetap (`wrong_password`, `node_unreachable`, `insufficient_funds`, ...) dan diterjemahkan.
 - Folder data: `%APPDATA%\Zevrigo` (Windows) atau `~/.zevrigo`, atau `ZEVRIGO_WALLET_DATADIR`.
 - CSP ketat di `tauri.conf.json`: hanya sumber aplikasi sendiri dan IPC.

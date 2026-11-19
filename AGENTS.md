@@ -19,7 +19,8 @@ berlaku di sini.** Bila aturan di file ini dan di repo inti bertentangan, ikuti 
 ## Git
 - Conventional Commits. Jangan `git push`, jangan force, jangan mengubah riwayat, remote, identitas, atau `git config`.
   Push dilakukan pencipta (DEC-32). Jangan memakai GitHub CLI atau akun online tanpa izin tertulis.
-- Status sekarang: **belum repo git** (keputusan git menunggu pencipta).
+- Repo git sejak 18 November 2026 (mulai bersih, DEC-08), remote `badakbesi/zevrigo-wallet`. Tag dan rilis wallet hanya di
+  repo ini dan dibuat pencipta (AGENDA P15).
 
 ## Perintah
 ```bash
@@ -32,7 +33,9 @@ npm run tauri build # aplikasi rilis dan installer
 - File wallet dan perintah wallet lewat pustaka MOD-12 (`zevrigo-cli`), sama dengan CLI. Jangan menulis ulang kriptografi.
 - Rilis Windows dari tag `wallet-v<versi>` (`.github/workflows/rilis-wallet.yml`), versi tag = `src-tauri/tauri.conf.json`.
   Penandatanganan: `docs/code-signing-policy.md` (SignPath, DEC-07).
-- Android: kunci rilis milik pencipta di `~/.zevrigo-kunci` (di luar repo); agent tidak pernah menyentuhnya.
+- Android: kunci rilis milik pencipta di `~/.zevrigo-kunci` (di luar repo); agent tidak pernah menyentuhnya. Proyek Gradle
+  `src-tauri/gen/android` tidak di-commit (jalur mutlak PC pencipta); jangan menjalankan `tauri android init` ulang di atasnya.
+- Ikon aplikasi diturunkan dari `merek/` repo inti (DEC-40); jangan diganti tanpa keputusan pencipta.
 
 ## Berhenti dan tanya bila
 - Ada parameter protokol yang tampak salah, atau tugas butuh dependensi baru, `sudo`, atau perubahan di luar repo ini.
