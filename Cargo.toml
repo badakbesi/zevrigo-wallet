@@ -31,6 +31,11 @@ tauri = { version = "=2.12.3" }
 # TSK-M58: dipakai langsung oleh MOD-15 di Android (inisialisasi JNI); versi sama dengan yang dibawa MOD-08 (DEC-10 bagian 14).
 rustls-platform-verifier = { version = "=0.5.3", default-features = false }
 tauri-build = { version = "=2.7.2" }
+# RENCANA_T9 F5 (izin pencipta 20 November 2026): membuka halaman transaksi di explorer resmi lewat browser sistem (Android:
+# Intent ACTION_VIEW dari komponen Kotlin plugin; Windows: ShellExecute). Hanya dipanggil dari Rust dengan tautan yang disusun
+# wallet sendiri (`open_explorer_tx`); perintah JavaScript plugin tidak diizinkan (tanpa capabilities) dan skrip tautan JS
+# plugin dimatikan. 2.7.3 butuh tauri ^2.12 dan tauri-plugin ^2.7.1 (2.7.2 cocok dengan tauri-utils 2.10.2). Versi dikunci persis.
+tauri-plugin-opener = { version = "=2.7.3" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

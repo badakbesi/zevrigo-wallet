@@ -1,11 +1,14 @@
 /**
- * Tabel riwayat transaksi, dipakai layar Ringkasan (5 terbaru) dan Riwayat.
+ * Tabel riwayat transaksi, dipakai layar Ringkasan (5 terbaru) dan Riwayat. Tiap transaksi bisa disalin txid-nya atau dibuka
+ * di explorer resmi (regtest, RENCANA_T9 F5).
  */
 
 import { ArrowDownLeft, ArrowUpRight, Pickaxe, RefreshCw } from 'lucide-react';
 import { type Direction, type HistoryEntryDto, classify, confirmations } from '../lib/history';
 import type { Dict } from '../lib/i18n';
 import { type Lang, toQuanta } from '../lib/quanta';
+import { useWallet } from '../store';
+import { ExplorerButton } from './ExplorerButton';
 import { CopyButton, Zvrg } from './ui';
 
 const STYLE: Record<Direction, string> = {
@@ -44,6 +47,7 @@ export function HistoryTable({
   emptyText: string;
 }) {
   const locale = lang === 'id' ? 'id-ID' : 'en-US';
+  const network = useWallet((s) => s.network);
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse text-xs">
@@ -98,6 +102,7 @@ export function HistoryTable({
                         {entry.txid.slice(0, 10)}…{entry.txid.slice(-6)}
                       </span>
                       <CopyButton text={entry.txid} t={t} />
+                      <ExplorerButton txid={entry.txid} network={network} t={t} />
                     </div>
                   </td>
                 </tr>

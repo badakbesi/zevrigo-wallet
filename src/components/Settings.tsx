@@ -1,15 +1,16 @@
 /**
  * Pengaturan: alamat node per jaringan (dengan catatan privasi gerbang demo untuk regtest), bahasa, tema, lokasi file
- * wallet, lihat frasa pemulihan (password), dan hapus wallet dari perangkat ini (password + konfirmasi catatan frasa,
- * TSK-M58).
+ * wallet, kunci aplikasi (RENCANA_T9 F7), lihat frasa pemulihan (password), dan hapus wallet dari perangkat ini
+ * (password + konfirmasi catatan frasa, TSK-M58).
  */
 
-import { Eye, EyeOff, FolderOpen, Globe, KeyRound, Server, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, FolderOpen, Globe, KeyRound, Lock, Server, Trash2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
-import { TEXT, walletErrorText } from '../lib/i18n';
+import { type ShownError, shownError } from '../lib/errors';
+import { TEXT } from '../lib/i18n';
 import { ipc, toWalletError } from '../lib/ipc';
 import { useWallet } from '../store';
-import { Card, ErrorBox, PageHeader, inputClass, primaryButton, secondaryButton } from './ui';
+import { Card, PageHeader, ShownErrorBox, inputClass, primaryButton, secondaryButton } from './ui';
 
 function Choice<T extends string>({
   value,
@@ -41,18 +42,31 @@ function Choice<T extends string>({
 }
 
 export function Settings() {
-  const { language, theme, network, info, rpcUrl, rpcUrls, setRpcUrl, setLanguage, setTheme, setTab, loadWallet } =
-    useWallet();
+  const {
+    language,
+    theme,
+    network,
+    info,
+    rpcUrl,
+    rpcUrls,
+    lockApp,
+    setRpcUrl,
+    setLanguage,
+    setTheme,
+    setLockApp,
+    setTab,
+    loadWallet,
+  } = useWallet();
   const t = TEXT[language];
   const [rpcInput, setRpcInput] = useState(rpcUrl());
   const [password, setPassword] = useState('');
   const [phrase, setPhrase] = useState<string | null>(null);
-  const [revealError, setRevealError] = useState<string | null>(null);
+  const [revealError, setRevealError] = useState<ShownError | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteNoted, setDeleteNoted] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<ShownError | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const closeDelete = () => {
@@ -76,7 +90,7 @@ export function Settings() {
       setTab('dashboard');
       await loadWallet();
     } catch (err) {
-      setDeleteError(walletErrorText(t, toWalletError(err).code));
+      setDeleteError(shownError(t, toWalletError(err)));
     } finally {
       setDeletePassword('');
       setDeleting(false);
@@ -92,7 +106,7 @@ export function Settings() {
       setPassword('');
     } catch (err) {
       setPhrase(null);
-      setRevealError(walletErrorText(t, toWalletError(err).code));
+      setRevealError(shownError(t, toWalletError(err)));
     } finally {
       setBusy(false);
     }
@@ -175,6 +189,22 @@ export function Settings() {
           </div>
         </Card>
 
+        <Card className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t.lockSettingTitle}</h2>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.lockSettingDesc}</p>
+          <Choice
+            value={lockApp ? 'on' : 'off'}
+            onChange={(value) => setLockApp(value === 'on')}
+            options={[
+              { key: 'on', label: t.lockOn },
+              { key: 'off', label: t.lockOff },
+            ]}
+          />
+        </Card>
+
         <Card className="space-y-3">
           <div className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4 text-emerald-500" />
@@ -221,7 +251,7 @@ export function Settings() {
               </button>
             </div>
           )}
-          {revealError && <ErrorBox>{revealError}</ErrorBox>}
+          {revealError && <ShownErrorBox error={revealError} t={t} />}
         </Card>
 
         <Card className="space-y-4">
@@ -256,7 +286,7 @@ export function Settings() {
                 className={inputClass}
                 required
               />
-              {deleteError && <ErrorBox>{deleteError}</ErrorBox>}
+              {deleteError && <ShownErrorBox error={deleteError} t={t} />}
               <div className="flex justify-between gap-2">
                 <button type="button" onClick={closeDelete} disabled={deleting} className={secondaryButton}>
                   {t.cancel}

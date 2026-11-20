@@ -2,21 +2,24 @@
 //!
 //! Setiap perintah memakai pustaka MOD-12 `zevrigo-cli` dengan folder data [`AppState`]. Pekerjaan yang lama (Argon2id,
 //! RPC ke node, pemindaian riwayat) berjalan di utas sendiri, tidak di utas jendela. Galat dikirim ke antarmuka sebagai
-//! [`CommandError`] dengan kode tetap untuk diterjemahkan. Jumlah koin selalu teks angka quanta.
+//! [`CommandError`] dengan kode tetap untuk diterjemahkan. Jumlah koin selalu teks angka quanta. Kirim selalu lewat
+//! pratinjau dulu (`preview_send`, RENCANA_T9 F3), dan aplikasi bisa dikunci dengan password wallet (`unlock_app`, F7).
 
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 use tauri::State;
+use tauri_plugin_opener::OpenerExt as _;
 use zeroize::Zeroizing;
 use zevrigo_cli::{
-    Balance, Cli, CliError, History, HistoryEntry, Protection, Sent, WalletFileError,
-    check_new_password, default_rpc_url, history_path, load_network, network_name, next_address,
-    os_random, show_phrase, wallet_path, wallet_restore,
+    Balance, Cli, CliError, Expected, History, HistoryEntry, Preview, Protection, Sent, Spend,
+    WalletFileError, check_new_password, default_rpc_url, history_path, load_network, network_name,
+    next_address, os_random, show_phrase, wallet_path, wallet_restore,
 };
 use zevrigo_primitives::{Amount, Network, OutputKind};
 use zevrigo_wallet_core::{
-    KdfParams, Mnemonic, NONCE_LEN, RECEIVE_BRANCH, SALT_LEN, SendError, encode_address,
+    HARDENED, KdfParams, Mnemonic, NONCE_LEN, RECEIVE_BRANCH, SALT_LEN, SendError, account_key,
+    encode_address,
 };
 
 /// Variabel lingkungan untuk memilih folder data wallet (misalnya folder yang sama dengan `--datadir` CLI).
@@ -111,7 +114,9 @@ pub fn error_code(error: &CliError) -> &'static str {
         CliError::WrongNetwork { .. } => "wrong_network",
         CliError::Rpc { .. } => "node_unreachable",
         CliError::Rejected { .. } => "rejected",
+        CliError::PreviewChanged { .. } => "preview_changed",
         CliError::Send(SendError::InsufficientFunds { .. }) => "insufficient_funds",
+        CliError::Send(SendError::TooLarge { .. }) => "too_many_coins",
         CliError::Send(SendError::ZeroAmount) => "bad_amount",
         CliError::Send(_) => "send_failed",
         CliError::Address(_) => "bad_address",
@@ -157,6 +162,34 @@ pub fn parse_quanta(text: &str) -> Result<Amount, CommandError> {
         return Err(bad());
     }
     Ok(Amount::from_quanta(quanta))
+}
+
+/// Jumlah kirim dari antarmuka (RENCANA_T9 F4): `all` = semua saldo yang bisa dipakai (teks jumlah diabaikan), selain itu
+/// teks quanta [`parse_quanta`].
+///
+/// # Errors
+///
+/// Kode `bad_amount`.
+pub fn parse_spend(amount: &str, all: bool) -> Result<Spend, CommandError> {
+    if all {
+        return Ok(Spend::All);
+    }
+    Ok(Spend::Amount(parse_quanta(amount)?))
+}
+
+/// Tarif biaya dari antarmuka: minimal 1 quanta per byte.
+///
+/// # Errors
+///
+/// Kode `bad_fee` untuk 0.
+pub fn check_fee_rate(fee_rate: u64) -> Result<u128, CommandError> {
+    if fee_rate == 0 {
+        return Err(CommandError::new(
+            "bad_fee",
+            "tarif biaya minimal 1 quanta per byte",
+        ));
+    }
+    Ok(u128::from(fee_rate))
 }
 
 fn quanta(amount: Amount) -> String {
@@ -308,6 +341,38 @@ impl From<&Sent> for SentView {
     }
 }
 
+/// Pratinjau kirim ([`Preview`], RENCANA_T9 F3) dengan jumlah sebagai teks quanta. Total keluar dihitung antarmuka
+/// (jumlah + biaya, bigint).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewView {
+    /// Jumlah yang diterima penerima.
+    pub amount: String,
+    /// Biaya.
+    pub fee: String,
+    /// Kembalian, jika ada.
+    pub change: Option<String>,
+    /// Jumlah input.
+    pub inputs: usize,
+    /// Ukuran transaksi dalam byte.
+    pub size: usize,
+    /// Tinggi ujung chain saat dihitung.
+    pub tip_height: u64,
+}
+
+impl From<&Preview> for PreviewView {
+    fn from(preview: &Preview) -> Self {
+        Self {
+            amount: quanta(preview.amount),
+            fee: quanta(preview.fee),
+            change: preview.change.map(quanta),
+            inputs: preview.inputs,
+            size: preview.size,
+            tip_height: preview.tip_height,
+        }
+    }
+}
+
 /// Keadaan file wallet `network` di `datadir`.
 #[must_use]
 pub fn wallet_info_in(datadir: &Path, network: Network) -> WalletInfo {
@@ -392,6 +457,97 @@ pub fn new_address_in(datadir: &Path, network: Network) -> Result<String, Comman
     Ok(next_address(network, datadir, "")?)
 }
 
+/// Explorer resmi jaringan demo regtest (`SUMBER_RESMI.md` repo inti). Testnet belum punya explorer publik.
+pub const DEMO_EXPLORER_URL: &str = "https://zevrigo.ratuaurion.store";
+
+/// Tautan halaman transaksi `txid` di explorer resmi jaringan `network` (RENCANA_T9 F5): hanya regtest, dan hanya txid 64
+/// huruf hex kecil, jadi tautan tidak bisa dibelokkan ke alamat lain.
+///
+/// # Errors
+///
+/// `no_explorer` untuk jaringan tanpa explorer publik, `bad_txid` untuk txid yang tidak sah.
+pub fn explorer_tx_url(network: Network, txid: &str) -> Result<String, CommandError> {
+    if !matches!(network, Network::Regtest) {
+        return Err(CommandError::new(
+            "no_explorer",
+            format!(
+                "jaringan {} belum punya explorer publik",
+                network_name(network)
+            ),
+        ));
+    }
+    let valid = txid.len() == 64
+        && txid
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase());
+    if !valid {
+        return Err(CommandError::new(
+            "bad_txid",
+            "txid harus 64 huruf hex kecil",
+        ));
+    }
+    Ok(format!("{DEMO_EXPLORER_URL}/tx/?id={txid}"))
+}
+
+/// Paling banyak alamat penerimaan (yang terbaru) yang dikirim [`list_addresses_in`] ke antarmuka.
+pub const MAX_LISTED_ADDRESSES: u32 = 1_000;
+
+/// Satu alamat penerimaan wallet di daftar layar Terima.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddressView {
+    /// Indeks di cabang penerimaan (`m/44'/coin'/0'/0/<index>`).
+    pub index: u32,
+    /// Alamat bech32m jenis 0.
+    pub address: String,
+}
+
+/// Alamat penerimaan yang sudah dibuat wallet, terbaru dulu.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddressList {
+    /// Jumlah alamat penerimaan yang sudah dibuat (indeks berikutnya di file wallet).
+    pub total: u32,
+    /// Paling banyak [`MAX_LISTED_ADDRESSES`] alamat terbaru, indeks terbesar dulu.
+    pub addresses: Vec<AddressView>,
+}
+
+/// Alamat penerimaan yang sudah dibuat (indeks 0 sampai sebelum indeks berikutnya di file wallet), terbaru dulu, untuk
+/// daftar di layar Terima (RENCANA_T8, pencipta 19 November 2026). Diturunkan dari kunci akun publik di file wallet
+/// (versi 2) atau dari frasa (versi 1), jadi tanpa password dan tanpa node. File wallet tidak diubah dan indeks tidak
+/// dinaikkan. Indeks yang turunannya tidak sah dilewati, seperti pemindaian MOD-12.
+///
+/// # Errors
+///
+/// Galat file wallet atau turunan kunci.
+pub fn list_addresses_in(datadir: &Path, network: Network) -> Result<AddressList, CommandError> {
+    let file = load_network(network, &wallet_path(network, datadir))?;
+    let account = match file.account()? {
+        Some(account) => account,
+        None => {
+            let seed = file.mnemonic()?.to_seed("").map_err(CliError::from)?;
+            account_key(&seed, network)
+                .and_then(|key| key.to_public())
+                .map_err(CliError::from)?
+        }
+    };
+    let branch = account
+        .derive_child(RECEIVE_BRANCH)
+        .map_err(CliError::from)?;
+    let total = file.next_index.receive.min(HARDENED);
+    let first = total.saturating_sub(MAX_LISTED_ADDRESSES);
+    let addresses = (first..total)
+        .rev()
+        .filter_map(|index| {
+            branch.derive_child(index).ok().map(|child| AddressView {
+                index,
+                address: encode_address(network, OutputKind::SingleKey, &child.x_only()),
+            })
+        })
+        .collect();
+    Ok(AddressList { total, addresses })
+}
+
 /// Frasa pemulihan wallet, dibuka dengan password.
 ///
 /// # Errors
@@ -400,6 +556,17 @@ pub fn new_address_in(datadir: &Path, network: Network) -> Result<String, Comman
 pub fn reveal_in(datadir: &Path, network: Network, password: &str) -> Result<String, CommandError> {
     let phrase = show_phrase(network, datadir, password)?;
     Ok(phrase.as_str().to_owned())
+}
+
+/// Membuka kunci aplikasi (RENCANA_T9 F7): password wallet `network` diperiksa dengan membuka frasa (Argon2id), lalu
+/// frasa langsung dibuang dari memori. Tidak ada yang dikirim ke antarmuka selain berhasil atau galat.
+///
+/// # Errors
+///
+/// `wrong_password`, `wallet_missing`, atau galat file wallet.
+pub fn unlock_in(datadir: &Path, network: Network, password: &str) -> Result<(), CommandError> {
+    let _unlocked = show_phrase(network, datadir, password)?;
+    Ok(())
 }
 
 /// Menghapus wallet `network` dari perangkat ini (TSK-M58): tembolok riwayat `history.json`, lalu file wallet. Password
@@ -455,6 +622,23 @@ fn chain_status_at(rpc_url: &str, network: Network) -> Result<ChainStatus, Comma
     })
 }
 
+fn preview_at(
+    datadir: &Path,
+    network: Network,
+    rpc_url: &str,
+    to: &str,
+    amount: &str,
+    all: bool,
+    fee_rate: u64,
+) -> Result<PreviewView, CommandError> {
+    let spend = parse_spend(amount, all)?;
+    let fee_rate = check_fee_rate(fee_rate)?;
+    let preview =
+        Cli::connect(rpc_url, network)?.preview(datadir, "", to.trim(), spend, fee_rate)?;
+    Ok(PreviewView::from(&preview))
+}
+
+#[allow(clippy::too_many_arguments)]
 fn send_at(
     datadir: &Path,
     network: Network,
@@ -462,24 +646,27 @@ fn send_at(
     password: &str,
     to: &str,
     amount: &str,
+    all: bool,
     fee_rate: u64,
+    expected_amount: &str,
+    expected_fee: &str,
 ) -> Result<SentView, CommandError> {
-    let amount = parse_quanta(amount)?;
-    if fee_rate == 0 {
-        return Err(CommandError::new(
-            "bad_fee",
-            "tarif biaya minimal 1 quanta per byte",
-        ));
-    }
+    let spend = parse_spend(amount, all)?;
+    let fee_rate = check_fee_rate(fee_rate)?;
+    let expected = Expected {
+        amount: parse_quanta(expected_amount)?,
+        fee: parse_quanta(expected_fee)?,
+    };
     let aux_rand = Zeroizing::new(os_random()?);
     let cli = Cli::connect(rpc_url, network)?;
-    let sent = cli.send(
+    let sent = cli.send_spend(
         datadir,
         "",
         password,
         to.trim(),
-        amount,
-        u128::from(fee_rate),
+        spend,
+        fee_rate,
+        Some(expected),
         &aux_rand,
     )?;
     Ok(SentView::from(&sent))
@@ -576,6 +763,48 @@ pub async fn new_address(
     run_blocking(move || new_address_in(&datadir, network)).await
 }
 
+/// `list_addresses`: alamat penerimaan yang sudah dibuat, terbaru dulu (tanpa password, tanpa node).
+///
+/// # Errors
+///
+/// Lihat [`list_addresses_in`].
+#[tauri::command]
+pub async fn list_addresses(
+    state: State<'_, AppState>,
+    network: String,
+) -> Result<AddressList, CommandError> {
+    let network = parse_network(&network)?;
+    let datadir = state.datadir.clone();
+    run_blocking(move || list_addresses_in(&datadir, network)).await
+}
+
+/// `open_explorer_tx`: membuka halaman transaksi di explorer resmi lewat browser sistem (plugin opener, dipanggil dari Rust
+/// saja dengan tautan dari [`explorer_tx_url`]).
+///
+/// # Errors
+///
+/// `network`, `no_explorer`, `bad_txid`, atau `open_failed` bila browser tidak bisa dibuka.
+#[tauri::command]
+pub async fn open_explorer_tx(
+    app: tauri::AppHandle,
+    network: String,
+    txid: String,
+) -> Result<(), CommandError> {
+    let network = parse_network(&network)?;
+    let url = explorer_tx_url(network, &txid)?;
+    run_blocking(move || {
+        app.opener()
+            .open_url(url.as_str(), None::<&str>)
+            .map_err(|error| {
+                CommandError::new(
+                    "open_failed",
+                    format!("browser tidak bisa dibuka untuk {url}: {error}"),
+                )
+            })
+    })
+    .await
+}
+
 /// `chain_status`: ringkasan chain node di `rpc_url`, dengan syarat node berjalan di jaringan yang sama.
 ///
 /// # Errors
@@ -627,13 +856,37 @@ pub async fn history(
     .await
 }
 
-/// `send`: menyusun, menandatangani (password wallet), dan mengirim transaksi `amount` quanta ke `to`.
+/// `preview_send`: pratinjau kirim tanpa password (RENCANA_T9 F3): jumlah diterima, biaya, kembalian, input, ukuran.
+/// `all` = kirim semua saldo yang bisa dipakai (F4).
 ///
 /// # Errors
 ///
-/// `bad_amount`, `bad_fee`, `bad_address`, `insufficient_funds`, `wrong_password`, `rejected`, atau
+/// `bad_amount`, `bad_fee`, `bad_address`, `insufficient_funds`, `too_many_coins`, atau `node_unreachable`.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub async fn preview_send(
+    state: State<'_, AppState>,
+    network: String,
+    rpc_url: String,
+    to: String,
+    amount: String,
+    all: bool,
+    fee_rate: u64,
+) -> Result<PreviewView, CommandError> {
+    let network = parse_network(&network)?;
+    let datadir = state.datadir.clone();
+    run_blocking(move || preview_at(&datadir, network, &rpc_url, &to, &amount, all, fee_rate)).await
+}
+
+/// `send`: menyusun ulang rencana, memeriksa bahwa jumlah dan biaya sama dengan pratinjau yang dilihat pengguna
+/// (`expected_amount`, `expected_fee`), menandatangani (password wallet), dan mengirim. `all` = kirim semua saldo.
+///
+/// # Errors
+///
+/// `bad_amount`, `bad_fee`, `bad_address`, `insufficient_funds`, `preview_changed`, `wrong_password`, `rejected`, atau
 /// `node_unreachable`.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn send(
     state: State<'_, AppState>,
     network: String,
@@ -641,17 +894,46 @@ pub async fn send(
     password: String,
     to: String,
     amount: String,
+    all: bool,
     fee_rate: u64,
+    expected_amount: String,
+    expected_fee: String,
 ) -> Result<SentView, CommandError> {
     let network = parse_network(&network)?;
     let datadir = state.datadir.clone();
     let password = Zeroizing::new(password);
     run_blocking(move || {
         send_at(
-            &datadir, network, &rpc_url, &password, &to, &amount, fee_rate,
+            &datadir,
+            network,
+            &rpc_url,
+            &password,
+            &to,
+            &amount,
+            all,
+            fee_rate,
+            &expected_amount,
+            &expected_fee,
         )
     })
     .await
+}
+
+/// `unlock_app`: membuka kunci aplikasi dengan password wallet (RENCANA_T9 F7).
+///
+/// # Errors
+///
+/// Lihat [`unlock_in`].
+#[tauri::command]
+pub async fn unlock_app(
+    state: State<'_, AppState>,
+    network: String,
+    password: String,
+) -> Result<(), CommandError> {
+    let network = parse_network(&network)?;
+    let datadir = state.datadir.clone();
+    let password = Zeroizing::new(password);
+    run_blocking(move || unlock_in(&datadir, network, &password)).await
 }
 
 /// `reveal_phrase`: frasa pemulihan, dibuka dengan password.

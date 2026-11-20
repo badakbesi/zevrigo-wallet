@@ -1,7 +1,8 @@
 //! MOD-15: wallet Zevrigo Coin (`zevrigo-wallet`) untuk desktop (TSK-M42, DEC-31) dan Android (TSK-M58).
 //!
 //! Aplikasi Tauri 2: antarmuka React di `apps/wallet/src` memanggil perintah IPC di modul `commands`. Semua pekerjaan
-//! wallet (file wallet terenkripsi, alamat, saldo, riwayat, kirim, lihat frasa, hapus wallet) memakai pustaka MOD-12 `zevrigo-cli`,
+//! wallet (file wallet terenkripsi, alamat dan daftar alamat, saldo, riwayat, pratinjau dan kirim, kunci aplikasi, lihat
+//! frasa, hapus wallet) memakai pustaka MOD-12 `zevrigo-cli`,
 //! sehingga file wallet sama dengan CLI (`<folder data>/<jaringan>/wallet.json`). Jumlah koin melewati IPC sebagai teks
 //! angka quanta, tidak pernah sebagai bilangan pecahan. Hanya testnet dan regtest.
 //!
@@ -23,6 +24,13 @@ mod commands;
 /// [`tauri::Error`] jika folder data tidak ditemukan (`Setup`) atau jendela dan WebView gagal dibuat.
 pub fn try_run() -> Result<(), tauri::Error> {
     tauri::Builder::default()
+        // RENCANA_T9 F5: browser sistem untuk tombol Explorer, hanya lewat perintah Rust `open_explorer_tx`. Skrip tautan JS
+        // plugin dimatikan, dan tanpa capabilities antarmuka tidak bisa memanggil perintah plugin sendiri.
+        .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
         .setup(setup)
         .invoke_handler(tauri::generate_handler![
             commands::wallet_info,
@@ -30,10 +38,14 @@ pub fn try_run() -> Result<(), tauri::Error> {
             commands::restore_wallet,
             commands::receive_address,
             commands::new_address,
+            commands::list_addresses,
+            commands::open_explorer_tx,
             commands::chain_status,
             commands::balance,
             commands::history,
+            commands::preview_send,
             commands::send,
+            commands::unlock_app,
             commands::reveal_phrase,
             commands::delete_wallet,
         ])

@@ -1,11 +1,21 @@
 /**
- * Keadaan antarmuka wallet (zustand). Pengaturan (jaringan, alamat node per jaringan, bahasa, tema) disimpan di
+ * Keadaan antarmuka wallet (zustand). Pengaturan (jaringan, alamat node per jaringan, bahasa, tema, kunci aplikasi) disimpan di
  * localStorage; data wallet (alamat, saldo, riwayat) selalu dibaca ulang dari backend Rust dan tidak disimpan di sini.
+ * Kunci aplikasi (RENCANA_T9 F7): `locked` mulai true; dibuka dengan password wallet jaringan aktif (Argon2id di Rust).
  */
 
 import { create } from 'zustand';
 import { NETWORKS, type WalletNetwork } from './lib/address';
-import { type BalanceDto, type ChainStatus, type HistoryDto, type WalletError, type WalletInfo, ipc, toWalletError } from './lib/ipc';
+import {
+  type AddressListDto,
+  type BalanceDto,
+  type ChainStatus,
+  type HistoryDto,
+  type WalletError,
+  type WalletInfo,
+  ipc,
+  toWalletError,
+} from './lib/ipc';
 import type { Lang } from './lib/quanta';
 
 export type Tab = 'dashboard' | 'receive' | 'send' | 'history' | 'settings';
@@ -17,11 +27,12 @@ interface Settings {
   rpcUrls: Partial<Record<WalletNetwork, string>>;
   language: Lang;
   theme: Theme;
+  lockApp: boolean;
 }
 
 const SETTINGS_KEY = 'zevrigo-wallet-settings-v1';
 // Bawaan regtest: jaringan demo publik (DEC-34, TSK-M61). Testnet publik belum diluncurkan.
-const DEFAULT_SETTINGS: Settings = { network: 'regtest', rpcUrls: {}, language: 'id', theme: 'dark' };
+const DEFAULT_SETTINGS: Settings = { network: 'regtest', rpcUrls: {}, language: 'id', theme: 'dark', lockApp: true };
 
 function loadSettings(): Settings {
   try {
@@ -42,6 +53,8 @@ function loadSettings(): Settings {
       rpcUrls,
       language: value.language === 'en' ? 'en' : 'id',
       theme: value.theme === 'light' ? 'light' : 'dark',
+      // Kunci aplikasi aktif kecuali dimatikan pengguna di Pengaturan.
+      lockApp: value.lockApp !== false,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -61,28 +74,34 @@ interface WalletState extends Settings {
   info: WalletInfo | null;
   infoError: WalletError | null;
   address: string;
+  addresses: AddressListDto | null;
   chain: ChainStatus | null;
   balance: BalanceDto | null;
   history: HistoryDto | null;
   connection: Connection;
   syncError: WalletError | null;
   refreshing: boolean;
+  locked: boolean;
   rpcUrl: () => string;
   setTab: (tab: Tab) => void;
   setLanguage: (language: Lang) => void;
   setTheme: (theme: Theme) => void;
+  setLockApp: (lockApp: boolean) => void;
+  lock: () => void;
+  unlock: (password: string) => Promise<void>;
   setNetwork: (network: WalletNetwork) => Promise<void>;
   setRpcUrl: (url: string | null) => Promise<void>;
   loadWallet: () => Promise<void>;
   refresh: () => Promise<void>;
   newAddress: () => Promise<void>;
+  loadAddresses: () => Promise<void>;
   walletReady: (address: string) => Promise<void>;
 }
 
 export const useWallet = create<WalletState>()((set, get) => {
   const settings = () => {
-    const { network, rpcUrls, language, theme } = get();
-    return { network, rpcUrls, language, theme };
+    const { network, rpcUrls, language, theme, lockApp } = get();
+    return { network, rpcUrls, language, theme, lockApp };
   };
   return {
     ...loadSettings(),
@@ -90,12 +109,14 @@ export const useWallet = create<WalletState>()((set, get) => {
     info: null,
     infoError: null,
     address: '',
+    addresses: null,
     chain: null,
     balance: null,
     history: null,
     connection: 'idle',
     syncError: null,
     refreshing: false,
+    locked: true,
 
     rpcUrl: () => {
       const { network, rpcUrls, info } = get();
@@ -112,6 +133,18 @@ export const useWallet = create<WalletState>()((set, get) => {
     setTheme: (theme) => {
       set({ theme });
       saveSettings(settings());
+    },
+
+    setLockApp: (lockApp) => {
+      set({ lockApp });
+      saveSettings(settings());
+    },
+
+    lock: () => set({ locked: true }),
+
+    unlock: async (password) => {
+      await ipc.unlockApp(get().network, password);
+      set({ locked: false });
     },
 
     setNetwork: async (network) => {
@@ -142,6 +175,7 @@ export const useWallet = create<WalletState>()((set, get) => {
         info: null,
         infoError: null,
         address: '',
+        addresses: null,
         chain: null,
         balance: null,
         history: null,
@@ -156,6 +190,7 @@ export const useWallet = create<WalletState>()((set, get) => {
         set({ info });
         if (info.exists) {
           set({ address: await ipc.receiveAddress(network) });
+          await get().loadAddresses();
           await get().refresh();
         }
       } catch (error) {
@@ -191,13 +226,34 @@ export const useWallet = create<WalletState>()((set, get) => {
       const address = await ipc.newAddress(network);
       if (get().network === network) {
         set({ address });
+        await get().loadAddresses();
+      }
+    },
+
+    loadAddresses: async () => {
+      const { network, info } = get();
+      if (!info?.exists) {
+        return;
+      }
+      try {
+        const addresses = await ipc.listAddresses(network);
+        if (get().network === network) {
+          set({ addresses });
+        }
+      } catch {
+        // Daftar hanya tampilan: alamat terbaru tetap tampil dari receive_address.
+        if (get().network === network) {
+          set({ addresses: null });
+        }
       }
     },
 
     walletReady: async (address) => {
       const { network } = get();
       const info = await ipc.walletInfo(network);
-      set({ info, address, tab: 'dashboard' });
+      // Password baru saja diketik untuk membuat atau memulihkan wallet ini.
+      set({ info, address, addresses: null, tab: 'dashboard', locked: false });
+      await get().loadAddresses();
       await get().refresh();
     },
   };

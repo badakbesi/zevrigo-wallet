@@ -48,3 +48,29 @@ peluncur Android diganti logo resmi (DEC-40). Rilis Windows dibangun dari repo i
 `rilis-wallet.yml`). APK 0.2.1 dibangun tanpa tanda tangan lalu ditandatangani pencipta (`q155_tanda.sh`); rilis APK terpisah
 dari rilis Windows (keputusan pencipta 19 November 2026). Sejak 0.2.1 satu APK memuat pustaka untuk HP 64-bit (`arm64-v8a`) dan
 32-bit (`armeabi-v7a`), karena APK 0.2.0 yang hanya arm64 tidak bisa dipasang di HP 32-bit (pencipta 19 November 2026).
+
+## Bagian 6: konfigurasi jaringan untuk CRL (Q161)
+Uji pencipta 19 November 2026: APK rilis 0.2.1 tidak bisa memanggil RPC sama sekali, APK debug bisa (HP sama). Sebab:
+sertifikat gerbang RPC (Let's Encrypt YE2) tanpa alamat OCSP, hanya CRL lewat `http://`; pemeriksa sertifikat Android yang
+dipakai rustls-platform-verifier-android 0.1.1 tidak bisa mengunduhnya karena rilis melarang lalu lintas http
+(`usesCleartextTraffic=false`), lalu melaporkan sertifikat sah sebagai "Revoked" (rustls/rustls-platform-verifier#221). Bukan
+perubahan kode dan bukan pemindaian Google. Perbaikan tanpa dependensi baru di proyek Gradle (`src-tauri/gen/android`, tidak
+di-commit, salinan di arsip): `res/xml/network_security_config.xml` mengizinkan http hanya ke host CRL (`c.lencr.org`,
+`pki.goog`, `crls.ssl.com`), salinan debug mengizinkan semua host, dan atribut `networkSecurityConfig` di manifest. APK
+`6722bc28…` lolos uji pencipta (online, saldo, riwayat). Perbaikan hulu (komponen Android 0.2.0, crate 0.7.1) dicatat untuk nanti.
+
+## Bagian 7: daftar alamat penerimaan, versi 0.2.2 (Q162, RENCANA_T8)
+Pertanyaan pencipta 19 November 2026: "tambah alamat" terasa seperti mengganti alamat, karena layar Terima hanya menampilkan
+alamat terakhir. Perintah `list_addresses` dan kartu "Semua alamat penerimaan" (salin dan kode QR per alamat), label tombol
+"Buat alamat tambahan", catatan gap limit. Versi 0.2.2 (versionCode 2002), dipasang di atas 0.2.1 dengan kunci yang sama.
+
+## Bagian 8: scan kode QR dan URI `zevrigo:`, versi 0.2.3 (Q163, RENCANA_T10)
+Pencipta 20 November 2026: wallet belum dirilis sampai fitur dasar ada (RENCANA_T9 F1–F7), mulai dari scan QR. Dipilih cara
+kamera WebView + `jsqr` 1.4.0 (bukan plugin resmi barcode-scanner yang memakai ML Kit lewat Google Play Services). Proyek
+Gradle: izin `CAMERA` dan `uses-feature android.hardware.camera` (tidak wajib) di manifest; jembatan izin WebView→Android sudah
+ada di `RustWebChromeClient.kt` buatan Tauri. Versi 0.2.3 (versionCode 2003).
+
+## Bagian 9: tautan explorer dan pesan galat lengkap, versi 0.2.4 (Q164, RENCANA_T9 F5 dan F6)
+Tombol "Explorer" membuka halaman transaksi di browser HP lewat `tauri-plugin-opener` 2.7.3 (komponen Kotlin plugin:
+`Intent.ACTION_VIEW`; kelas `app.tauri.opener.OpenerPlugin` dijaga aturan R8 bawaan tauri-android untuk kelas `@TauriPlugin`).
+Pesan galat menampilkan detail teknis dari Rust. Versi 0.2.4 (versionCode 2004).

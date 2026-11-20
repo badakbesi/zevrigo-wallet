@@ -7,6 +7,10 @@ Cargo.lock lewat `tauri` 2.12.3 dan `tauri-build` 2.7.2, dan semua paket npm di
 
 ## Rust (253 paket baru)
 
+Sejak 0.2.4 (Q164, izin pencipta 20 November 2026): `tauri-plugin-opener` 2.7.3 (Apache-2.0 OR MIT), untuk tombol Explorer.
+Paket turunannya (antara lain `open`, `tauri-plugin` 2.7.2 untuk build, dan `zbus` yang hanya dipakai di Linux) ikut masuk
+Cargo.lock; tabel di bawah masih daftar 0.1 dan diperbarui sesudah Cargo.lock 0.2.4.
+
 | Lisensi | Jumlah |
 |---|---|
 | MIT OR Apache-2.0 | 98 |
@@ -288,13 +292,16 @@ Cargo.lock lewat `tauri` 2.12.3 dan `tauri-build` 2.7.2, dan semua paket npm di
 | x11-dl | 2.21.0 | MIT |
 | zlib-rs | 0.6.8 | Zlib |
 
-## npm (171 paket, 37 masuk aplikasi)
+## npm (172 paket, 38 masuk aplikasi)
+
+Sejak 0.2.3 (Q163, izin pencipta 20 November 2026): `jsqr` 1.4.0 (Apache-2.0), pembaca kode QR JavaScript murni tanpa
+dependensi, untuk scan QR di layar Kirim.
 
 | Lisensi | Jumlah |
 |---|---|
 | MIT | 100 |
 | MPL-2.0 | 24 |
-| Apache-2.0 | 23 |
+| Apache-2.0 | 24 |
 | Apache-2.0 OR MIT | 13 |
 | ISC | 10 |
 | BSD-3-Clause | 1 |
@@ -405,6 +412,7 @@ Cargo.lock lewat `tauri` 2.12.3 dan `tauri-build` 2.7.2, dan semua paket npm di
 | graceful-fs | 4.2.11 | ISC | dev |
 | is-fullwidth-code-point | 3.0.0 | MIT | app |
 | jiti | 2.7.0 | MIT | dev |
+| jsqr | 1.4.0 | Apache-2.0 | app |
 | lightningcss | 1.32.0 | MPL-2.0 | dev |
 | lightningcss | 1.33.0 | MPL-2.0 | dev |
 | lightningcss-android-arm64 | 1.32.0 | MPL-2.0 | dev, opsional |

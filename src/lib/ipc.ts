@@ -44,6 +44,38 @@ export interface SentDto {
   size: number;
 }
 
+/** Pratinjau kirim (`preview_send`, RENCANA_T9 F3): rencana yang sama dengan `send`, tanpa password dan tanpa mengirim. */
+export interface PreviewDto {
+  amount: string;
+  fee: string;
+  change: string | null;
+  inputs: number;
+  size: number;
+  tipHeight: number;
+}
+
+/** Permintaan kirim dari layar Kirim; `all` = kirim semua saldo yang bisa dipakai (teks `amount` diabaikan). */
+export interface SendRequestArgs {
+  network: WalletNetwork;
+  rpcUrl: string;
+  to: string;
+  amount: string;
+  all: boolean;
+  feeRate: number;
+}
+
+/** Satu alamat penerimaan (`list_addresses`): indeks di cabang penerimaan dan alamat bech32m. */
+export interface AddressItem {
+  index: number;
+  address: string;
+}
+
+/** Alamat penerimaan yang sudah dibuat, terbaru dulu (paling banyak 1.000); `total` = jumlah alamat yang sudah dibuat. */
+export interface AddressListDto {
+  total: number;
+  addresses: AddressItem[];
+}
+
 export interface WalletError {
   code: string;
   message: string;
@@ -66,19 +98,17 @@ export const ipc = {
     invoke<string>('restore_wallet', { network, phrase, password, confirm }),
   receiveAddress: (network: WalletNetwork) => invoke<string>('receive_address', { network }),
   newAddress: (network: WalletNetwork) => invoke<string>('new_address', { network }),
+  listAddresses: (network: WalletNetwork) => invoke<AddressListDto>('list_addresses', { network }),
   chainStatus: (network: WalletNetwork, rpcUrl: string) => invoke<ChainStatus>('chain_status', { network, rpcUrl }),
   balance: (network: WalletNetwork, rpcUrl: string) => invoke<BalanceDto>('balance', { network, rpcUrl }),
   history: (network: WalletNetwork, rpcUrl: string) => invoke<HistoryDto>('history', { network, rpcUrl }),
-  send: (args: {
-    network: WalletNetwork;
-    rpcUrl: string;
-    password: string;
-    to: string;
-    amount: string;
-    feeRate: number;
-  }) => invoke<SentDto>('send', args),
+  previewSend: (args: SendRequestArgs) => invoke<PreviewDto>('preview_send', { ...args }),
+  send: (args: SendRequestArgs & { password: string; expectedAmount: string; expectedFee: string }) =>
+    invoke<SentDto>('send', { ...args }),
+  unlockApp: (network: WalletNetwork, password: string) => invoke<null>('unlock_app', { network, password }),
   revealPhrase: (network: WalletNetwork, password: string) =>
     invoke<string>('reveal_phrase', { network, password }),
   deleteWallet: (network: WalletNetwork, password: string) =>
     invoke<null>('delete_wallet', { network, password }),
+  openExplorerTx: (network: WalletNetwork, txid: string) => invoke<null>('open_explorer_tx', { network, txid }),
 };

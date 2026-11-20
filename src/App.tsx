@@ -1,20 +1,24 @@
 /**
  * Kerangka wallet desktop: bilah atas (nama, navigasi), bilah status (node, tinggi blok, jaringan, bahasa, tema), pita
  * jaringan demo untuk regtest (TSK-M61), dan layar aktif. Tanpa wallet di jaringan aktif, hanya layar wallet baru /
- * pulihkan yang tampil.
+ * pulihkan yang tampil. Dengan kunci aplikasi (RENCANA_T9 F7, bawaan aktif), hanya layar kunci yang tampil sampai password
+ * wallet benar: saat aplikasi dibuka, sesudah 1 menit di latar belakang, atau sesudah tombol Kunci.
  */
 
-import { Blocks, CircleCheck, Moon, OctagonAlert, RefreshCw, Sun } from 'lucide-react';
+import { Blocks, CircleCheck, Lock, Moon, OctagonAlert, RefreshCw, Sun } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { History } from './components/History';
+import { LockScreen } from './components/LockScreen';
 import { Onboarding } from './components/Onboarding';
 import { Receive } from './components/Receive';
 import { Send } from './components/Send';
 import { Settings } from './components/Settings';
-import { ErrorBox } from './components/ui';
+import { ShownErrorBox } from './components/ui';
 import { NETWORKS } from './lib/address';
-import { TEXT, walletErrorText } from './lib/i18n';
+import { shownError } from './lib/errors';
+import { TEXT } from './lib/i18n';
+import { lockAfterHidden } from './lib/lock';
 import { type Tab, useWallet } from './store';
 
 const REFRESH_MS = 20_000;
@@ -24,6 +28,8 @@ export default function App() {
   const { language, theme, network, tab, info, infoError, connection, chain, setTab, setNetwork, setLanguage, setTheme } =
     state;
   const t = TEXT[language];
+  const isLocked = Boolean(info?.exists) && state.lockApp && state.locked;
+  const showNav = Boolean(info?.exists) && !isLocked;
 
   useEffect(() => {
     void useWallet.getState().loadWallet();
@@ -33,6 +39,23 @@ export default function App() {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.lang = language;
   }, [theme, language]);
+
+  useEffect(() => {
+    // Kunci lagi sesudah aplikasi berada di latar belakang paling sedikit 1 menit (HP dikunci, pindah aplikasi).
+    let hiddenAt: number | null = null;
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+        return;
+      }
+      if (lockAfterHidden(hiddenAt, Date.now())) {
+        useWallet.getState().lock();
+      }
+      hiddenAt = null;
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   useEffect(() => {
     if (!info?.exists) {
@@ -52,11 +75,13 @@ export default function App() {
 
   let body: ReactNode;
   if (infoError) {
-    body = <ErrorBox>{walletErrorText(t, infoError.code)}</ErrorBox>;
+    body = <ShownErrorBox error={shownError(t, infoError)} t={t} />;
   } else if (info === null) {
     body = <div className="text-sm text-slate-500 dark:text-slate-400">{t.loading}</div>;
   } else if (!info.exists) {
     body = <Onboarding />;
+  } else if (isLocked) {
+    body = <LockScreen />;
   } else {
     body = {
       dashboard: <Dashboard />,
@@ -71,7 +96,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <header className="flex items-center justify-between gap-8 px-4 md:px-6 py-3 md:py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <div className="text-lg font-bold tracking-tight whitespace-nowrap">{t.appName}</div>
-        {info?.exists && (
+        {showNav && (
           <nav aria-label="Navigasi" className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400 overflow-x-auto">
             {nav.map((item) => (
               <button
@@ -126,6 +151,19 @@ export default function App() {
             )}
           </div>
           <div className="flex items-center gap-3">
+            {showNav && state.lockApp && (
+              <button
+                type="button"
+                data-testid="lock-now"
+                aria-label={t.lockNow}
+                title={t.lockNow}
+                onClick={() => state.lock()}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t.lockNow}</span>
+              </button>
+            )}
             <div
               role="group"
               aria-label={t.networkLabel}
@@ -174,19 +212,19 @@ export default function App() {
         </div>
       )}
 
-      <main className={`flex-1 w-full max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8 ${info?.exists ? 'pb-24 md:pb-8' : ''}`}>
+      <main className={`flex-1 w-full max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8 ${showNav ? 'pb-24 md:pb-8' : ''}`}>
         {body}
       </main>
 
       <footer
         className={`border-t border-slate-200 dark:border-slate-800/80 px-4 md:px-6 py-4 text-xs text-slate-500 dark:text-slate-400 ${
-          info?.exists ? 'mb-16 md:mb-0' : ''
+          showNav ? 'mb-16 md:mb-0' : ''
         }`}
       >
         <div className="max-w-6xl mx-auto">{t.footer}</div>
       </footer>
 
-      {info?.exists && (
+      {showNav && (
         // TSK-M58: layar sempit (HP Android) memakai menu bawah dengan tombol besar; layar lebar tetap menu atas.
         <nav
           aria-label="Navigasi"

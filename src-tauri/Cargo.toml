@@ -29,6 +29,8 @@ zevrigo-cli.workspace = true
 zevrigo-wallet-core.workspace = true
 # DEC-10 bagian 11 (DEC-31): jendela WebView dan IPC antarmuka.
 tauri.workspace = true
+# RENCANA_T9 F5: tombol Explorer membuka browser sistem (lihat Cargo.toml workspace).
+tauri-plugin-opener.workspace = true
 serde.workspace = true
 zeroize = { workspace = true, features = ["alloc"] }
 

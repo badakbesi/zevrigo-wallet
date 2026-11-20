@@ -8,10 +8,11 @@
 import { ArrowLeft, ArrowRight, KeyRound, RefreshCw, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { checkPhrase, quizPositions } from '../lib/bip39';
-import { TEXT, walletErrorText } from '../lib/i18n';
+import { type ShownError, shownError } from '../lib/errors';
+import { TEXT } from '../lib/i18n';
 import { ipc, toWalletError } from '../lib/ipc';
 import { useWallet } from '../store';
-import { Card, ErrorBox, PageHeader, inputClass, primaryButton, secondaryButton } from './ui';
+import { Card, PageHeader, ShownErrorBox, inputClass, primaryButton, secondaryButton } from './ui';
 
 function PasswordFields({
   password,
@@ -66,7 +67,7 @@ function CreateWallet() {
   const [answers, setAnswers] = useState<string[]>(['', '', '']);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ShownError | null>(null);
   const [busy, setBusy] = useState(false);
   const words = useMemo(() => (phrase ? phrase.split(' ') : []), [phrase]);
 
@@ -81,7 +82,7 @@ function CreateWallet() {
       setWritten(false);
       setStep('show');
     } catch (e) {
-      setError(walletErrorText(t, toWalletError(e).code));
+      setError(shownError(t, toWalletError(e)));
     } finally {
       setBusy(false);
     }
@@ -92,7 +93,7 @@ function CreateWallet() {
     setError(null);
     const matches = positions.every((p, i) => (answers[i] ?? '').trim().toLowerCase() === words[p - 1]);
     if (!matches) {
-      setError(t.verifyMismatch);
+      setError({ text: t.verifyMismatch });
       return;
     }
     setBusy(true);
@@ -103,7 +104,7 @@ function CreateWallet() {
       setConfirm('');
       await walletReady(address);
     } catch (err) {
-      setError(walletErrorText(t, toWalletError(err).code));
+      setError(shownError(t, toWalletError(err)));
     } finally {
       setBusy(false);
     }
@@ -116,7 +117,7 @@ function CreateWallet() {
           <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
           <p className="text-sm text-slate-700 dark:text-slate-300">{t.createIntro}</p>
         </div>
-        {error && <ErrorBox>{error}</ErrorBox>}
+        {error && <ShownErrorBox error={error} t={t} />}
         <div className="flex justify-end">
           <button type="button" onClick={makePhrase} disabled={busy} className={primaryButton}>
             <KeyRound className="w-4 h-4" />
@@ -159,7 +160,7 @@ function CreateWallet() {
           <input type="checkbox" checked={written} onChange={(e) => setWritten(e.target.checked)} />
           {t.showConfirm}
         </label>
-        {error && <ErrorBox>{error}</ErrorBox>}
+        {error && <ShownErrorBox error={error} t={t} />}
         <div className="flex justify-between">
           <button type="button" onClick={() => setStep('intro')} className={secondaryButton}>
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -203,7 +204,7 @@ function CreateWallet() {
           ))}
         </div>
         <PasswordFields password={password} confirm={confirm} onPassword={setPassword} onConfirm={setConfirm} />
-        {error && <ErrorBox>{error}</ErrorBox>}
+        {error && <ShownErrorBox error={error} t={t} />}
         <div className="flex justify-between">
           <button type="button" onClick={() => setStep('show')} className={secondaryButton}>
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -225,7 +226,7 @@ function RestoreWallet() {
   const [input, setInput] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ShownError | null>(null);
   const [busy, setBusy] = useState(false);
   const check = useMemo(() => checkPhrase(input), [input]);
   const unknownAt = useMemo(() => new Set(check.unknown.map((u) => u.position)), [check]);
@@ -235,7 +236,7 @@ function RestoreWallet() {
     e.preventDefault();
     setError(null);
     if (!ready) {
-      setError(check.countOk ? t.walletErrors.bad_phrase : t.restoreCountBad);
+      setError({ text: check.countOk ? t.walletErrors.bad_phrase : t.restoreCountBad });
       return;
     }
     setBusy(true);
@@ -246,7 +247,7 @@ function RestoreWallet() {
       setConfirm('');
       await walletReady(address);
     } catch (err) {
-      setError(walletErrorText(t, toWalletError(err).code));
+      setError(shownError(t, toWalletError(err)));
     } finally {
       setBusy(false);
     }
@@ -311,7 +312,7 @@ function RestoreWallet() {
         )}
         <PasswordFields password={password} confirm={confirm} onPassword={setPassword} onConfirm={setConfirm} />
         <p className="text-xs text-slate-500 dark:text-slate-400">{t.restoreNote}</p>
-        {error && <ErrorBox>{error}</ErrorBox>}
+        {error && <ShownErrorBox error={error} t={t} />}
         <div className="flex justify-end">
           <button type="submit" disabled={busy || !ready} className={primaryButton}>
             <KeyRound className="w-4 h-4" />

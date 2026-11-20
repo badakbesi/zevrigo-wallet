@@ -17,6 +17,13 @@ Zevrigo, yaitu alamat node yang tertulis di Pengaturan. Yang dikirim ke node itu
 Frasa pemulihan, password, dan kunci rahasia tidak pernah dikirim. File wallet dikunci
 password dan disimpan di komputer ini.
 
+Kamera hanya dipakai saat Anda menekan Scan QR di layar Kirim. Gambar kamera diproses di
+perangkat ini untuk membaca kode QR, tidak disimpan, dan tidak dikirim ke mana pun.
+
+Tombol Explorer membuka browser Anda ke explorer resmi https://zevrigo.ratuaurion.store
+untuk satu transaksi. Situs itu melihat txid yang dibuka dan alamat IP Anda; wallet tidak
+mengirim apa pun ke sana sendiri.
+
 Untuk jaringan regtest, node bawaan adalah gerbang demo publik
 https://zevrigo-rpc.ratuaurion.store yang dijalankan pembuat Zevrigo di belakang
 Cloudflare. Gerbang itu bisa melihat alamat mana yang dicek wallet ini, dan alamat IP
@@ -56,6 +63,13 @@ node: the node address shown in Settings. It sends to that node:
 - transactions already signed on this computer.
 The recovery phrase, password, and secret keys are never sent. The wallet file is
 locked with the password and stays on this computer.
+
+The camera is used only when you press Scan QR on the Send screen. Camera images are
+processed on this device to read the QR code; they are not stored or sent anywhere.
+
+The Explorer button opens your browser at the official explorer
+https://zevrigo.ratuaurion.store for one transaction. That site sees the opened txid and
+your IP address; the wallet itself sends nothing there.
 
 For regtest, the default node is the public demo gateway
 https://zevrigo-rpc.ratuaurion.store, run by the Zevrigo creator behind Cloudflare.

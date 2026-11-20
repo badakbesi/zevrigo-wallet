@@ -5,6 +5,7 @@
 import { Check, Copy, TriangleAlert } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { formatQuanta, formatZvrg, type Lang } from '../lib/quanta';
+import type { ShownError } from '../lib/errors';
 import type { Dict } from '../lib/i18n';
 
 export const inputClass =
@@ -46,15 +47,41 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   );
 }
 
-export function ErrorBox({ children }: { children: ReactNode }) {
+/**
+ * Kotak galat. `detail` (RENCANA_T9 F6): keterangan lengkap dari Rust, dilipat di bawah "Detail teknis" dengan tombol salin
+ * (butuh `t`).
+ */
+export function ErrorBox({ children, detail, t }: { children: ReactNode; detail?: string; t?: Dict }) {
   return (
     <div
       role="alert"
       className="flex items-start gap-2 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-700 dark:text-rose-300"
     >
       <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
-      <div>{children}</div>
+      <div className="min-w-0 flex-1">
+        <div>{children}</div>
+        {detail && (
+          <details className="mt-1.5">
+            <summary className="cursor-pointer select-none font-semibold">{t ? t.errorDetail : 'Detail'}</summary>
+            <div className="mt-1.5 flex items-start gap-2">
+              <code data-testid="error-detail" className="flex-1 min-w-0 font-mono text-[11px] break-all">
+                {detail}
+              </code>
+              {t && <CopyButton text={detail} t={t} />}
+            </div>
+          </details>
+        )}
+      </div>
     </div>
+  );
+}
+
+/** Kotak galat dari `shownError`: teks terjemahan dan detail teknis bila ada. */
+export function ShownErrorBox({ error, t }: { error: ShownError; t: Dict }) {
+  return (
+    <ErrorBox detail={error.detail} t={t}>
+      {error.text}
+    </ErrorBox>
   );
 }
 
