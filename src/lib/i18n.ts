@@ -175,6 +175,7 @@ const id = {
   blockLabel: 'blok',
   historyEmpty: 'Belum ada transaksi.',
   historyNone: 'Tidak ada transaksi yang cocok.',
+  historyFailed: 'Riwayat belum bisa dimuat; saldo tetap terbaru. Wallet mencoba lagi otomatis setiap 20 detik dan melanjutkan dari blok terakhir yang tersimpan.',
   // Pengaturan
   settingsTitle: 'Pengaturan',
   nodeTitle: 'Node',
@@ -412,6 +413,7 @@ const en: Dict = {
   blockLabel: 'block',
   historyEmpty: 'No transactions yet.',
   historyNone: 'No matching transactions.',
+  historyFailed: 'History could not be loaded yet; the balance is up to date. The wallet retries automatically every 20 seconds and continues from the last saved block.',
   settingsTitle: 'Settings',
   nodeTitle: 'Node',
   nodeDesc: 'RPC address of the Zevrigo node for this network. Default:',

@@ -32,7 +32,7 @@ jobs:
       contents: write
     env:
       CI: "true"
-      ZEVRIGO_CORE_REF: b3a396b24478beea474b874505a723c638738f4d
+      ZEVRIGO_CORE_REF: 58b26bab72df0aeb666cfc59a791489ffa7c1ef6
     defaults:
       run:
         working-directory: zevrigo-wallet

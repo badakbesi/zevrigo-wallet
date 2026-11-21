@@ -2,6 +2,8 @@
  * Keadaan antarmuka wallet (zustand). Pengaturan (jaringan, alamat node per jaringan, bahasa, tema, kunci aplikasi) disimpan di
  * localStorage; data wallet (alamat, saldo, riwayat) selalu dibaca ulang dari backend Rust dan tidak disimpan di sini.
  * Kunci aplikasi (RENCANA_T9 F7): `locked` mulai true; dibuka dengan password wallet jaringan aktif (Argon2id di Rust).
+ * Refresh (0.3.1, TSK-M70): status chain dan saldo dulu; riwayat sesudahnya dengan galat sendiri (`historyError`), sehingga
+ * saldo tetap tampil dan status tetap terhubung bila hanya pemindaian riwayat yang gagal.
  */
 
 import { create } from 'zustand';
@@ -80,6 +82,7 @@ interface WalletState extends Settings {
   history: HistoryDto | null;
   connection: Connection;
   syncError: WalletError | null;
+  historyError: WalletError | null;
   refreshing: boolean;
   locked: boolean;
   rpcUrl: () => string;
@@ -115,6 +118,7 @@ export const useWallet = create<WalletState>()((set, get) => {
     history: null,
     connection: 'idle',
     syncError: null,
+    historyError: null,
     refreshing: false,
     locked: true,
 
@@ -164,7 +168,7 @@ export const useWallet = create<WalletState>()((set, get) => {
       } else {
         rpcUrls[get().network] = trimmed;
       }
-      set({ rpcUrls, chain: null, balance: null, history: null, connection: 'idle' });
+      set({ rpcUrls, chain: null, balance: null, history: null, historyError: null, connection: 'idle' });
       saveSettings(settings());
       await get().refresh();
     },
@@ -181,6 +185,7 @@ export const useWallet = create<WalletState>()((set, get) => {
         history: null,
         connection: 'idle',
         syncError: null,
+        historyError: null,
       });
       try {
         const info = await ipc.walletInfo(network);
@@ -208,9 +213,20 @@ export const useWallet = create<WalletState>()((set, get) => {
       try {
         const chain = await ipc.chainStatus(network, rpcUrl);
         const balance = await ipc.balance(network, rpcUrl);
-        const history = await ipc.history(network, rpcUrl);
-        if (get().network === network) {
-          set({ chain, balance, history, connection: 'online', syncError: null });
+        if (get().network !== network) {
+          return;
+        }
+        set({ chain, balance, connection: 'online', syncError: null });
+        try {
+          const history = await ipc.history(network, rpcUrl);
+          if (get().network === network) {
+            set({ history, historyError: null });
+          }
+        } catch (error) {
+          // Riwayat lama (bila ada) tetap tampil; pemindaian dilanjutkan dari blok tersimpan pada refresh berikutnya.
+          if (get().network === network) {
+            set({ historyError: toWalletError(error) });
+          }
         }
       } catch (error) {
         if (get().network === network) {

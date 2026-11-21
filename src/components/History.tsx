@@ -7,12 +7,13 @@ import { useMemo, useState } from 'react';
 import { type Direction, filterEntries } from '../lib/history';
 import { TEXT } from '../lib/i18n';
 import { useWallet } from '../store';
+import { HistoryError } from './HistoryError';
 import { HistoryTable } from './HistoryTable';
 import { Offline } from './Offline';
 import { Card, PageHeader, inputClass, secondaryButton } from './ui';
 
 export function History() {
-  const { language, history, connection, refresh, refreshing } = useWallet();
+  const { language, history, historyError, connection, refresh, refreshing } = useWallet();
   const t = TEXT[language];
   const [direction, setDirection] = useState<Direction | 'all'>('all');
   const [search, setSearch] = useState('');
@@ -41,6 +42,7 @@ export function History() {
         }
       />
       {connection === 'offline' && <Offline />}
+      <HistoryError />
       <div className="flex flex-col md:flex-row md:items-center gap-3">
         <div role="tablist" className="inline-flex flex-wrap p-1 rounded-lg bg-slate-200/80 dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800">
           {filters.map((f) => (
@@ -83,7 +85,7 @@ export function History() {
             emptyText={history.entries.length === 0 ? t.historyEmpty : t.historyNone}
           />
         ) : (
-          <div className="p-5 text-sm text-slate-500 dark:text-slate-400">{t.loading}</div>
+          <div className="p-5 text-sm text-slate-500 dark:text-slate-400">{historyError ? t.historyFailed : t.loading}</div>
         )}
       </Card>
     </div>

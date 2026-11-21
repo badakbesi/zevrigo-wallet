@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { TEXT } from '../lib/i18n';
 import { toQuanta } from '../lib/quanta';
 import { useWallet } from '../store';
+import { HistoryError } from './HistoryError';
 import { HistoryTable } from './HistoryTable';
 import { Offline } from './Offline';
 import { Card, CopyButton, PageHeader, Zvrg, primaryButton, secondaryButton } from './ui';
@@ -121,6 +122,8 @@ export function Dashboard() {
           </button>
         </div>
       </Card>
+
+      <HistoryError />
 
       {history && (
         <Card flush>

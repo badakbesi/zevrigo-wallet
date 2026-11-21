@@ -73,6 +73,14 @@ saat dibuka, sesudah 1 menit di latar belakang, dan tombol Kunci; bisa dimatikan
 pratinjau: `send` menerima jumlah dan biaya yang dilihat pengguna dan tidak menandatangani bila rencana baru berbeda
 (`preview_changed`). Versi Android `versionCode` 3000. Versi uji 0.2.1 sampai 0.2.4 tidak pernah dirilis.
 
+## 0.3.1 (21 November 2026, TSK-M70 repo inti)
+
+Galat "RPC gagal: Request rejected `429`" pada wallet baru di Windows: gerbang RPC demo membatasi laju per pengunjung, dan riwayat
+dipindai dari genesis tanpa jeda. Pustaka MOD-12 kini mencoba lagi panggilan yang dijawab `429` (sesudah 1 detik, paling banyak 8
+kali) dan menyimpan tembolok riwayat setiap 100 blok. Antarmuka memuat status chain dan saldo dulu, lalu riwayat dengan galat
+sendiri (`historyError`, komponen `HistoryError`): saldo tetap tampil dan status tetap terhubung bila hanya riwayat yang gagal.
+Android `versionCode` 3001.
+
 ## Uji
 
 - Rust (`src-tauri/src/commands/tests.rs`): nama jaringan, teks quanta, kode galat, bentuk JSON saldo dan riwayat, frasa
