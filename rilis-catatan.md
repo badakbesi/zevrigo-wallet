@@ -13,7 +13,7 @@ dengan `SHA256SUMS.txt`.
 
 - **Belum ditandatangani.** Windows SmartScreen menampilkan peringatan ("Windows protected your PC"); pilih "More info"
   lalu "Run anyway" hanya jika SHA-256 cocok. Lihat [Code signing policy](https://github.com/badakbesi/zevrigo-wallet/blob/main/docs/code-signing-policy.md).
-- **Privasi:** untuk regtest, wallet memakai gerbang demo publik `https://zevrigo-rpc.ratuaurion.store`, yang bisa melihat
+- **Privasi:** untuk regtest, wallet memakai gerbang demo publik `https://demo-gerbang-rpc.zevrigo.online`, yang bisa melihat
   alamat yang dicek wallet. Frasa, password, dan kunci rahasia tidak pernah dikirim. Ganti dengan node sendiri di
   Pengaturan. Teks lengkap tampil saat instalasi.
 - Butuh Microsoft Edge WebView2 (sudah ada di Windows 10 dan 11 yang diperbarui).

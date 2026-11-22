@@ -55,7 +55,7 @@ wajib sama dengan `version` di `src-tauri/tauri.conf.json`. Workflow membuat ril
 menerbitkannya. Aturan penandatanganan: `docs/code-signing-policy.md`.
 
 Sejak 0.2.0 (TSK-M61) jaringan bawaan wallet adalah **Regtest**, jaringan demo publik (DEC-34): node bawaannya gerbang
-RPC `https://zevrigo-rpc.ratuaurion.store` (MOD-18), dengan pita "REGTEST" dan catatan privasi di Pengaturan. Untuk
+RPC `https://demo-gerbang-rpc.zevrigo.online` (MOD-18; sejak 0.3.2, domain resmi DEC-42; 0.3.1 memakai `zevrigo-rpc.ratuaurion.store`), dengan pita "REGTEST" dan catatan privasi di Pengaturan. Untuk
 testnet, wallet butuh node di komputer sendiri, misalnya `zevrigo-node --testnet` (RPC bawaan `http://127.0.0.1:18801`).
 Alamat node bisa diubah di Pengaturan, misalnya `http://127.0.0.1:28801` untuk `zevrigo-node --regtest`. Node di WSL2 bisa
 dihubungi dari wallet Windows lewat `127.0.0.1`.

@@ -7,7 +7,7 @@
 import type { WalletNetwork } from './address';
 
 export const EXPLORER_URLS: Partial<Record<WalletNetwork, string>> = {
-  regtest: 'https://zevrigo.ratuaurion.store',
+  regtest: 'https://demo-explorer.zevrigo.online',
 };
 
 const TXID = /^[0-9a-f]{64}$/;

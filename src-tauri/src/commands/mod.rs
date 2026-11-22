@@ -25,8 +25,9 @@ use zevrigo_wallet_core::{
 /// Variabel lingkungan untuk memilih folder data wallet (misalnya folder yang sama dengan `--datadir` CLI).
 pub const DATADIR_ENV: &str = "ZEVRIGO_WALLET_DATADIR";
 
-/// Gerbang RPC publik jaringan demo regtest (DEC-34, TSK-M53): alamat node bawaan wallet untuk regtest (TSK-M61).
-pub const DEMO_RPC_URL: &str = "https://zevrigo-rpc.ratuaurion.store";
+/// Gerbang RPC publik jaringan demo regtest (DEC-34, TSK-M53): alamat node bawaan wallet untuk regtest (TSK-M61). Sejak
+/// 0.3.2 host domain resmi `zevrigo.online` (DEC-42).
+pub const DEMO_RPC_URL: &str = "https://demo-gerbang-rpc.zevrigo.online";
 
 /// Alamat node bawaan wallet: regtest memakai gerbang demo publik [`DEMO_RPC_URL`], jaringan lain node di komputer sendiri
 /// (alamat bawaan CLI). Pengguna bisa menggantinya di Pengaturan.
@@ -457,8 +458,8 @@ pub fn new_address_in(datadir: &Path, network: Network) -> Result<String, Comman
     Ok(next_address(network, datadir, "")?)
 }
 
-/// Explorer resmi jaringan demo regtest (`SUMBER_RESMI.md` repo inti). Testnet belum punya explorer publik.
-pub const DEMO_EXPLORER_URL: &str = "https://zevrigo.ratuaurion.store";
+/// Explorer resmi jaringan demo regtest (`SUMBER_RESMI.md` repo inti, DEC-42). Testnet belum punya explorer publik.
+pub const DEMO_EXPLORER_URL: &str = "https://demo-explorer.zevrigo.online";
 
 /// Tautan halaman transaksi `txid` di explorer resmi jaringan `network` (RENCANA_T9 F5): hanya regtest, dan hanya txid 64
 /// huruf hex kecil, jadi tautan tidak bisa dibelokkan ke alamat lain.

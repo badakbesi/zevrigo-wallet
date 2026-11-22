@@ -33,7 +33,7 @@ Teks lengkap ditampilkan saat instalasi: [src-tauri/PRIVASI-DAN-LISENSI.txt](../
 Ringkas:
 - Tanpa analitik, telemetri, atau laporan galat.
 - Wallet hanya menghubungi alamat node di Pengaturan. Untuk regtest, bawaannya gerbang demo publik
-  `https://zevrigo-rpc.ratuaurion.store`, yang bisa melihat alamat yang dicek wallet dan alamat IP lewat Cloudflare; gerbang
+  `https://demo-gerbang-rpc.zevrigo.online`, yang bisa melihat alamat yang dicek wallet dan alamat IP lewat Cloudflare; gerbang
   tidak menyimpan alamat IP dan tidak mencatat isi permintaan. Untuk testnet, bawaannya node di komputer sendiri.
 - Frasa pemulihan, password, dan kunci rahasia tidak pernah dikirim.
 - Dimatikan dengan mengisi alamat node sendiri di Pengaturan.

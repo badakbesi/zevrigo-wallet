@@ -446,10 +446,12 @@ fn deletes_wallet_only_with_password_then_restores_again() {
 #[test]
 fn explorer_link_only_for_regtest_and_lowercase_hex_txid() {
     let txid = "ab".repeat(32);
-    assert_eq!(DEMO_EXPLORER_URL, "https://zevrigo.ratuaurion.store");
+    assert_eq!(DEMO_EXPLORER_URL, "https://demo-explorer.zevrigo.online");
     assert_eq!(
         explorer_tx_url(Network::Regtest, &txid),
-        Ok(format!("https://zevrigo.ratuaurion.store/tx/?id={txid}"))
+        Ok(format!(
+            "https://demo-explorer.zevrigo.online/tx/?id={txid}"
+        ))
     );
     assert_eq!(
         code(explorer_tx_url(Network::Testnet, &txid)),
@@ -476,7 +478,7 @@ fn explorer_link_only_for_regtest_and_lowercase_hex_txid() {
 
 #[test]
 fn regtest_defaults_to_demo_gateway_and_testnet_to_local_node() {
-    assert_eq!(DEMO_RPC_URL, "https://zevrigo-rpc.ratuaurion.store");
+    assert_eq!(DEMO_RPC_URL, "https://demo-gerbang-rpc.zevrigo.online");
     assert_eq!(wallet_default_rpc_url(Network::Regtest), DEMO_RPC_URL);
     assert_eq!(
         wallet_default_rpc_url(Network::Testnet),

@@ -20,12 +20,12 @@ password dan disimpan di komputer ini.
 Kamera hanya dipakai saat Anda menekan Scan QR di layar Kirim. Gambar kamera diproses di
 perangkat ini untuk membaca kode QR, tidak disimpan, dan tidak dikirim ke mana pun.
 
-Tombol Explorer membuka browser Anda ke explorer resmi https://zevrigo.ratuaurion.store
-untuk satu transaksi. Situs itu melihat txid yang dibuka dan alamat IP Anda; wallet tidak
+Tombol Explorer membuka browser Anda ke explorer resmi
+https://demo-explorer.zevrigo.online untuk satu transaksi. Situs itu melihat txid yang dibuka dan alamat IP Anda; wallet tidak
 mengirim apa pun ke sana sendiri.
 
 Untuk jaringan regtest, node bawaan adalah gerbang demo publik
-https://zevrigo-rpc.ratuaurion.store yang dijalankan pembuat Zevrigo di belakang
+https://demo-gerbang-rpc.zevrigo.online yang dijalankan pembuat Zevrigo di belakang
 Cloudflare. Gerbang itu bisa melihat alamat mana yang dicek wallet ini, dan alamat IP
 Anda lewat Cloudflare. Gerbang tidak menyimpan alamat IP dan tidak mencatat isi
 permintaan. Cloudflare memproses lalu lintas menurut kebijakan privasinya sendiri:
@@ -68,11 +68,11 @@ The camera is used only when you press Scan QR on the Send screen. Camera images
 processed on this device to read the QR code; they are not stored or sent anywhere.
 
 The Explorer button opens your browser at the official explorer
-https://zevrigo.ratuaurion.store for one transaction. That site sees the opened txid and
+https://demo-explorer.zevrigo.online for one transaction. That site sees the opened txid and
 your IP address; the wallet itself sends nothing there.
 
 For regtest, the default node is the public demo gateway
-https://zevrigo-rpc.ratuaurion.store, run by the Zevrigo creator behind Cloudflare.
+https://demo-gerbang-rpc.zevrigo.online, run by the Zevrigo creator behind Cloudflare.
 The gateway can see which addresses this wallet checks, and your IP address through
 Cloudflare. The gateway does not store IP addresses and does not log request contents.
 Cloudflare processes the traffic under its own privacy policy:

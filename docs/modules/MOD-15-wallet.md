@@ -38,7 +38,7 @@ dan mengirim ZVRG, dengan kunci hanya di komputer pengguna.
   diminta saat pertama dipakai; Windows: webcam) dan membaca kode dengan paket npm `jsqr` 1.4.0 (Apache-2.0, JavaScript
   murni, izin pencipta 20 November 2026), tanpa Google Play Services. Gambar kamera hanya diproses di perangkat.
 - Tautan explorer (0.2.4, RENCANA_T9 F5): tombol "Explorer" di riwayat dan hasil kirim memanggil `open_explorer_tx`, yang
-  menyusun sendiri tautan `https://zevrigo.ratuaurion.store/tx/?id=<txid>` (hanya regtest, txid 64 hex kecil) dan membukanya
+  menyusun sendiri tautan `https://demo-explorer.zevrigo.online/tx/?id=<txid>` (sejak 0.3.2; hanya regtest, txid 64 hex kecil) dan membukanya
   di browser sistem lewat `tauri-plugin-opener` 2.7.3 (izin pencipta 20 November 2026). Antarmuka tidak bisa membuka URL lain:
   wallet tanpa capabilities, dan skrip tautan JS plugin dimatikan. Bila gagal, tautan bisa disalin.
 - Pesan galat lengkap (0.2.4, RENCANA_T9 F6): setiap kotak galat dari perintah Rust menampilkan teks terjemahan dan "Detail
@@ -54,7 +54,7 @@ dan mengirim ZVRG, dengan kunci hanya di komputer pengguna.
   14 November 2026), disiapkan saat mulai dengan `init_with_env` dan konteks Activity dari `WebviewWindow::with_webview` +
   `jni_handle().exec` (tanpa kode `unsafe` di repo). Layar sempit memakai menu bawah lima tombol (`md:hidden`).
 - Versi demo 0.2.0 (TSK-M61, DEC-34): jaringan bawaan regtest dengan node bawaan gerbang demo publik
-  `https://zevrigo-rpc.ratuaurion.store` (`wallet_default_rpc_url`; testnet tetap node lokal), pita "REGTEST" berisi
+  `https://zevrigo-rpc.ratuaurion.store` (sejak 0.3.2 `https://demo-gerbang-rpc.zevrigo.online`, DEC-42; `wallet_default_rpc_url`; testnet tetap node lokal), pita "REGTEST" berisi
   peringatan koin demo, catatan privasi di Pengaturan, pesan offline khusus gerbang demo. Installer menampilkan
   `src-tauri/PRIVASI-DAN-LISENSI.txt` (`bundle.licenseFile`). Rilis dibangun `.github/workflows/rilis-wallet.yml` dari tag
   `wallet-v<versi>` (rilis draf + SHA256SUMS.txt); belum ditandatangani (DEC-07, `docs/code-signing-policy.md`).
@@ -80,6 +80,14 @@ dipindai dari genesis tanpa jeda. Pustaka MOD-12 kini mencoba lagi panggilan yan
 kali) dan menyimpan tembolok riwayat setiap 100 blok. Antarmuka memuat status chain dan saldo dulu, lalu riwayat dengan galat
 sendiri (`historyError`, komponen `HistoryError`): saldo tetap tampil dan status tetap terhubung bila hanya riwayat yang gagal.
 Android `versionCode` 3001.
+
+## 0.3.2 (22 November 2026, DEC-42)
+
+Domain resmi `zevrigo.online`: node bawaan regtest `https://demo-gerbang-rpc.zevrigo.online` (`DEMO_RPC_URL`) dan explorer
+`https://demo-explorer.zevrigo.online` (`DEMO_EXPLORER_URL`, `src/lib/explorer.ts`); teks privasi installer ikut. Alamat node yang
+diisi sendiri di Pengaturan tidak berubah; pengguna dengan alamat bawaan langsung memakai gerbang baru. Gerbang lama
+`zevrigo-rpc.ratuaurion.store` tetap dilayani selama peralihan (wallet 0.3.1). `ZEVRIGO_CORE_REF` rilis Windows = repo inti
+`089ba15`. Android `versionCode` 3002.
 
 ## Uji
 
