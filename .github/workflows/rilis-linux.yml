@@ -1,0 +1,160 @@
+# Rilis Linux wallet: AppImage x86_64 (RENCANA_T14 bagian 5a, pencipta 23 November 2026: AppImage).
+# Dijalankan manual (workflow_dispatch) dengan masukan tag rilis yang SUDAH terbit, misalnya `wallet-v0.0.0`. Kode dibangun dari
+# commit tag itu (sama dengan installer Windows dan APK di rilis itu);
+# crate inti dari ZEVRIGO_CORE_REF yang tercatat di rilis-wallet.yml pada tag itu. AppImage dan baris SHA-256 ditambahkan ke rilis yang
+# sama (SHA256SUMS.txt diperbarui, catatan rilis diberi bagian Linux); AppImage yang sudah ada tidak ditimpa. tauri.conf.json
+# tidak diubah (`--bundles appimage`), jadi rilis Windows tetap NSIS. ubuntu-22.04: jalan di distro dengan glibc 2.35 atau lebih
+# baru. Belum ditandatangani (sama dengan installer Windows).
+
+name: Rilis Linux wallet
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag rilis yang sudah terbit, misalnya wallet-v0.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rilis-linux
+  cancel-in-progress: false
+
+jobs:
+  appimage:
+    name: AppImage Linux x86_64
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      CI: "true"
+      TAG: ${{ inputs.tag }}
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    steps:
+      - name: Tag sah, rilis sudah terbit, AppImage belum ada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^wallet-v[0-9]+[.][0-9]+[.][0-9]+$ ]] || { echo "tag tidak sah: $TAG"; exit 1; }
+          [ "$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json isDraft -q .isDraft)" = false ] || { echo "rilis $TAG belum terbit"; exit 1; }
+          VERSI=${TAG#wallet-v}
+          NAMA="zevrigo-wallet-$VERSI-x86_64.AppImage"
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -qxF "$NAMA"; then
+            echo "$NAMA sudah ada di rilis $TAG; tidak ditimpa"; exit 1
+          fi
+          echo "VERSI=$VERSI" >> "$GITHUB_ENV"
+          echo "NAMA=$NAMA" >> "$GITHUB_ENV"
+
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          path: zevrigo-wallet
+          persist-credentials: false
+
+      - name: Versi sama dengan tauri.conf.json, crate inti dari rilis-wallet.yml pada tag
+        working-directory: zevrigo-wallet
+        run: |
+          set -euo pipefail
+          v=$(python3 -c 'import json; print(json.load(open("src-tauri/tauri.conf.json"))["version"])')
+          [ "$v" = "$VERSI" ] || { echo "versi tauri.conf.json $v bukan $VERSI"; exit 1; }
+          ref=$(sed -n 's/^ *ZEVRIGO_CORE_REF: *\([0-9a-f]\{40\}\) *$/\1/p' .github/workflows/rilis-wallet.yml)
+          [ -n "$ref" ] || { echo "ZEVRIGO_CORE_REF tidak terbaca dari rilis-wallet.yml"; exit 1; }
+          echo "CORE_REF=$ref" >> "$GITHUB_ENV"
+          echo "COMMIT=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_ENV"
+          echo "versi $v, commit $(git rev-parse --short=7 HEAD), inti ${ref:0:7}"
+
+      - name: Checkout repo inti (crate zevrigo-*)
+        uses: actions/checkout@v4
+        with:
+          repository: badakbesi/zevrigo
+          ref: ${{ env.CORE_REF }}
+          path: zevrigo
+          persist-credentials: false
+
+      - name: Pustaka sistem (Tauri 2, WebKitGTK 4.1, FUSE 2)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential curl wget file pkg-config \
+            libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev libfuse2
+
+      - name: Toolchain Rust (rust-toolchain.toml)
+        working-directory: zevrigo-wallet
+        run: |
+          rustup toolchain install
+          rustc --version
+          cargo --version
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Paket npm (package-lock.json, tanpa skrip pasang)
+        working-directory: zevrigo-wallet
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck, test, build antarmuka
+        working-directory: zevrigo-wallet
+        run: npm run check
+
+      - name: Aplikasi rilis dan AppImage
+        working-directory: zevrigo-wallet
+        run: npm run tauri -- build --bundles appimage -- --locked
+
+      - name: Artefak
+        uses: actions/upload-artifact@v4
+        with:
+          name: zevrigo-wallet-${{ env.VERSI }}-linux
+          path: zevrigo-wallet/target/release/bundle/appimage/*.AppImage
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Nama tetap, SHA-256, tambahkan ke rilis
+        working-directory: zevrigo-wallet
+        env:
+          BUNDLE: target/release/bundle/appimage
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          a=$(find "$BUNDLE" -maxdepth 1 -name '*.AppImage' | head -n 1)
+          [ -n "$a" ] || { echo "AppImage tidak ditemukan di $BUNDLE"; exit 1; }
+          mkdir -p rilis-linux
+          cp "$a" "rilis-linux/$NAMA" && chmod +x "rilis-linux/$NAMA"
+          SHA=$(sha256sum "rilis-linux/$NAMA" | cut -d' ' -f1)
+          echo "$SHA  $NAMA"
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p SHA256SUMS.txt -D rilis-linux
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json body -q .body > rilis-linux/catatan-lama.md
+          SHA="$SHA" PRIVASI="https://github.com/$GITHUB_REPOSITORY/blob/$TAG/src-tauri/PRIVASI-DAN-LISENSI.txt" python3 - <<'PY'
+          import os
+          tag, nama, sha, commit = os.environ["TAG"], os.environ["NAMA"], os.environ["SHA"], os.environ["COMMIT"]
+          sums = "rilis-linux/SHA256SUMS.txt"
+          baris = [x for x in open(sums, encoding="ascii").read().splitlines() if x.strip()]
+          if any(x.endswith("  " + nama) for x in baris):
+              raise SystemExit(nama + " sudah ada di SHA256SUMS.txt")
+          baris.append(sha + "  " + nama)
+          open(sums, "w", encoding="ascii").write("\n".join(baris) + "\n")
+          lines = open("rilis-linux/catatan-lama.md", encoding="utf-8").read().splitlines()
+          rows = [i for i, x in enumerate(lines) if x.lstrip().startswith("| `")]
+          if not rows:
+              raise SystemExit("tabel berkas tidak ditemukan di catatan rilis")
+          lines.insert(rows[-1] + 1, "| `" + nama + "` | `" + sha + "` |")
+          teks = "\n".join(lines).rstrip("\n")
+          teks += (
+              "\n\n**Linux (x86_64):** `" + nama + "`, dibangun GitHub Actions di ubuntu-22.04 dari tag yang sama (commit `"
+              + commit + "`), untuk distro dengan glibc 2.35 atau lebih baru. Periksa: `sha256sum " + nama + "`. Jalankan: `chmod +x "
+              + nama + "` lalu `./" + nama + "`. Butuh FUSE 2 (`libfuse2`, di Ubuntu 24.04 ke atas `libfuse2t64`); tanpa FUSE: `./"
+              + nama + " --appimage-extract-and-run`. AppImage tanpa layar instalasi; kebijakan privasi dan lisensi sama dengan "
+              + "installer Windows: " + os.environ["PRIVASI"] + ". Belum ditandatangani."
+          )
+          open("rilis-linux/catatan-baru.md", "w", encoding="utf-8").write(teks + "\n")
+          PY
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" "rilis-linux/$NAMA"
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" rilis-linux/SHA256SUMS.txt --clobber
+          gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --notes-file rilis-linux/catatan-baru.md
+          echo "SELESAI wallet: $NAMA $SHA ditambahkan ke rilis $TAG"
