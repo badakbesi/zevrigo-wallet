@@ -19,7 +19,7 @@ Installer dibangun dari repo publik secara terverifikasi, dengan kebijakan priva
 
 ## Gerbang (Q129)
 `make check-all` paling sedikit 452 test; `make wallet-check`; workflow dibaca sebagai YAML dengan pemicu tag `wallet-v*`,
-`windows-latest`, `--locked`, rilis `--draft`; build Windows dari salinan working tree di `C:\zevrigo-build` menghasilkan
+`windows-latest`, `--locked`, rilis `--draft`; build Windows dari salinan working tree di `C:\zevrigo-rilis\build` menghasilkan
 `Zevrigo Wallet_0.2.0_x64-setup.exe` dengan halaman lisensi (`license_file` di folder kerja NSIS); `zevrigo-cli.exe` hasil
 build Windows menjawab `info` lewat `https://demo-gerbang-rpc.zevrigo.online` (TLS di Windows); commit tanpa push. Uji
 pencipta sesudahnya: pasang installer, halaman privasi tampil, wallet regtest tersambung ke gerbang.

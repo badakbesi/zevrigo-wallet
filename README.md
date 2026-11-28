@@ -39,7 +39,7 @@ WebView2. Pakai salinan bersih di luar repo (misalnya `git archive HEAD`), karen
 versi Linux dan `.cargo/config.toml` lokal memakai jalur Linux. Di PowerShell, dari salinan itu:
 
 ```powershell
-$env:CARGO_TARGET_DIR = 'C:\zevrigo-build\target'
+$env:CARGO_TARGET_DIR = 'C:\zevrigo-rilis\build\target'
 npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 npm run tauri -- build -- --locked
@@ -65,10 +65,10 @@ dihubungi dari wallet Windows lewat `127.0.0.1`.
 Isi aplikasi ada di pustaka `zevrigo_wallet_lib` (`src-tauri/src/lib.rs`), dipakai program desktop dan aplikasi Android.
 Di Android, wallet disimpan di folder data aplikasi (ikut terhapus bila aplikasi dihapus: simpan 24 kata pemulihan), dan
 sertifikat HTTPS gerbang RPC diperiksa terhadap daftar akar sistem Android (rustls-platform-verifier). Alat build Android di
-WSL ada di `~/android` (`source ~/.zevrigo-android.env`, TSK-M56). Pemeriksaan kode Android tanpa membangun APK:
+WSL ada di `~/android` (`source ~/zevrigo-rilis/android.env`, TSK-M56). Pemeriksaan kode Android tanpa membangun APK:
 
 ```bash
-source ~/.zevrigo-android.env
+source ~/zevrigo-rilis/android.env
 B="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
 CC_aarch64_linux_android="$B/aarch64-linux-android24-clang" AR_aarch64_linux_android="$B/llvm-ar" \
 CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$B/aarch64-linux-android24-clang" \

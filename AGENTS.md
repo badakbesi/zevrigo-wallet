@@ -33,7 +33,7 @@ npm run tauri build # aplikasi rilis dan installer
 - File wallet dan perintah wallet lewat pustaka MOD-12 (`zevrigo-cli`), sama dengan CLI. Jangan menulis ulang kriptografi.
 - Rilis Windows dari tag `wallet-v<versi>` (`.github/workflows/rilis-wallet.yml`), versi tag = `src-tauri/tauri.conf.json`.
   Penandatanganan: `docs/code-signing-policy.md` (SignPath, DEC-07).
-- Android: kunci rilis milik pencipta di `~/.zevrigo-kunci` (di luar repo); agent tidak pernah menyentuhnya. Proyek Gradle
+- Android: kunci rilis milik pencipta di `~/zevrigo-rilis/kunci` (di luar repo); agent tidak pernah menyentuhnya. Proyek Gradle
   `src-tauri/gen/android` tidak di-commit (jalur mutlak PC pencipta); jangan menjalankan `tauri android init` ulang di atasnya.
 - Ikon aplikasi diturunkan dari `merek/` repo inti (DEC-40); jangan diganti tanpa keputusan pencipta.
 

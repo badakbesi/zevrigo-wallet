@@ -25,7 +25,7 @@ APK uji `zevrigo-wallet-0.2.0-android-arm64-debug.apk` (201.907.294 byte, SHA-25
 HP Android pada 15 November 2026. Tidak dibagikan.
 
 ## Bagian 3: APK rilis (Q143)
-Kunci rilis dibuat pencipta di luar repo (`~/.zevrigo-kunci/zevrigo-wallet-rilis.p12`, PKCS12 RSA 4096, alias
+Kunci rilis dibuat pencipta di luar repo (`~/zevrigo-rilis/kunci/zevrigo-wallet-rilis.p12`, PKCS12 RSA 4096, alias
 `zevrigo-wallet`, `CN=Zevrigo Wallet, O=Zevrigo`, sidik sertifikat
 `1575be5a086d9242ec0661108cba4fd71276d0e94a40bca33749f991e9e30c1a`). Build rilis tanpa tanda tangan
 (`tauri android build --apk --target aarch64`, aturan R8 `-keep org.rustls.platformverifier.**` di proyek Gradle), lalu
