@@ -54,7 +54,7 @@ dan mengirim ZVRG, dengan kunci hanya di komputer pengguna.
   14 November 2026), disiapkan saat mulai dengan `init_with_env` dan konteks Activity dari `WebviewWindow::with_webview` +
   `jni_handle().exec` (tanpa kode `unsafe` di repo). Layar sempit memakai menu bawah lima tombol (`md:hidden`).
 - Versi demo 0.2.0 (TSK-M61, DEC-34): jaringan bawaan regtest dengan node bawaan gerbang demo publik
-  `https://zevrigo-rpc.ratuaurion.store` (sejak 0.3.2 `https://demo-gerbang-rpc.zevrigo.online`, DEC-42; `wallet_default_rpc_url`; testnet tetap node lokal), pita "REGTEST" berisi
+  `https://demo-gerbang-rpc.zevrigo.online` (sejak 0.3.2, DEC-42; `wallet_default_rpc_url`; testnet tetap node lokal), pita "REGTEST" berisi
   peringatan koin demo, catatan privasi di Pengaturan, pesan offline khusus gerbang demo. Installer menampilkan
   `src-tauri/PRIVASI-DAN-LISENSI.txt` (`bundle.licenseFile`). Rilis dibangun `.github/workflows/rilis-wallet.yml` dari tag
   `wallet-v<versi>` (rilis draf + SHA256SUMS.txt); belum ditandatangani (DEC-07, `docs/code-signing-policy.md`).
@@ -85,8 +85,8 @@ Android `versionCode` 3001.
 
 Domain resmi `zevrigo.online`: node bawaan regtest `https://demo-gerbang-rpc.zevrigo.online` (`DEMO_RPC_URL`) dan explorer
 `https://demo-explorer.zevrigo.online` (`DEMO_EXPLORER_URL`, `src/lib/explorer.ts`); teks privasi installer ikut. Alamat node yang
-diisi sendiri di Pengaturan tidak berubah; pengguna dengan alamat bawaan langsung memakai gerbang baru. Gerbang lama
-`zevrigo-rpc.ratuaurion.store` tetap dilayani selama peralihan (wallet 0.3.1). `ZEVRIGO_CORE_REF` rilis Windows = repo inti
+diisi sendiri di Pengaturan tidak berubah; pengguna dengan alamat bawaan langsung memakai gerbang baru. Wallet 0.3.1
+tidak tersambung lagi sejak 28 November 2026. `ZEVRIGO_CORE_REF` rilis Windows = repo inti
 `089ba15`. Android `versionCode` 3002.
 
 ## Uji

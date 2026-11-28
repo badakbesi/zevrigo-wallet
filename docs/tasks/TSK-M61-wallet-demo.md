@@ -10,7 +10,7 @@ Installer dibangun dari repo publik secara terverifikasi, dengan kebijakan priva
 ## Isi
 | Bagian | Isi |
 |---|---|
-| Rust (`commands`) | `DEMO_RPC_URL` = `https://zevrigo-rpc.ratuaurion.store`; `wallet_default_rpc_url`: regtest gerbang demo, testnet/mainnet alamat bawaan CLI (node lokal); `wallet_info.defaultRpcUrl` memakainya. Test baru `regtest_defaults_to_demo_gateway_and_testnet_to_local_node` |
+| Rust (`commands`) | `DEMO_RPC_URL` = `https://demo-gerbang-rpc.zevrigo.online`; `wallet_default_rpc_url`: regtest gerbang demo, testnet/mainnet alamat bawaan CLI (node lokal); `wallet_info.defaultRpcUrl` memakainya. Test baru `regtest_defaults_to_demo_gateway_and_testnet_to_local_node` |
 | Antarmuka | Jaringan bawaan `regtest` (pengaturan lama tetap); pita "REGTEST · jaringan demo …" di bawah bilah status; catatan privasi gerbang di kartu Node Pengaturan; pesan offline khusus regtest; teks kaki 0.2. Teks dua bahasa |
 | Installer | `tauri.conf.json`: versi 0.2.0, `bundle.licenseFile` `PRIVASI-DAN-LISENSI.txt` (halaman lisensi NSIS, tauri-bundler 2.10.2), `homepage`, `copyright` |
 | Privasi | `apps/wallet/src-tauri/PRIVASI-DAN-LISENSI.txt` (Indonesia, Inggris): data yang dikirim ke node, gerbang demo, Cloudflare, cara mematikan, lisensi |
@@ -21,7 +21,7 @@ Installer dibangun dari repo publik secara terverifikasi, dengan kebijakan priva
 `make check-all` paling sedikit 452 test; `make wallet-check`; workflow dibaca sebagai YAML dengan pemicu tag `wallet-v*`,
 `windows-latest`, `--locked`, rilis `--draft`; build Windows dari salinan working tree di `C:\zevrigo-build` menghasilkan
 `Zevrigo Wallet_0.2.0_x64-setup.exe` dengan halaman lisensi (`license_file` di folder kerja NSIS); `zevrigo-cli.exe` hasil
-build Windows menjawab `info` lewat `https://zevrigo-rpc.ratuaurion.store` (TLS di Windows); commit tanpa push. Uji
+build Windows menjawab `info` lewat `https://demo-gerbang-rpc.zevrigo.online` (TLS di Windows); commit tanpa push. Uji
 pencipta sesudahnya: pasang installer, halaman privasi tampil, wallet regtest tersambung ke gerbang.
 
 ## Rilis pertama
